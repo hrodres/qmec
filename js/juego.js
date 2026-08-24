@@ -125,7 +125,9 @@ function schedulePreTurn() {
 // ---- Inicio de turno ----
 function startNewTurn() {
     const team = gameState.teams[gameState.currentTeamIndex];
-    gameState.totalTime = gameState.teamTimes[team] || 30;
+    // teamTimes se guarda en DECISEGUNDOS (150/300/450/600 = 15/30/45/60s);
+    // el Temporizador espera SEGUNDOS -> convertir aqui (fix unidades 2026-08-24).
+    gameState.totalTime = (gameState.teamTimes[team] || 300) / 10;
     gameState.timeLeft = gameState.totalTime;
     gameState.isRunning = true;
     gameState.roundStarted = false;
