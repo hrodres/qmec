@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>¿Qué me estás container?</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0F172A;
+            --bg-secondary: #1E293B;
+            --bg-tertiary: #16213E;
+            --accent-purple: #7C3AED;
+            --accent-purple-light: #A855F7;
+            --accent-magenta: #EC4899;
+            --success: #10B981;
+            --error: #EF4444;
+            --warning: #F59E0B;
+            --text-primary: #FFFFFF;
+            --text-secondary: #9CA3AF;
+            --border: #334155;
+            
+            font-size: clamp(14px, 2vw, 18px);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.5;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-tertiary) 100%);
+            color: var(--text-primary);
+            overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #app {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: inherit;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            padding: clamp(1rem, 5vw, 2rem);
+            overflow-y: auto;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(1rem, 3vw, 1.5rem);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            font-size: clamp(2rem, 8vw, 3.5rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-magenta) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+            line-height: 1.1;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+
+        .tagline {
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            color: var(--text-secondary);
+            margin-top: -1rem;
+        }
+
+        .btn {
+            padding: clamp(0.75rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem);
+            border: none;
+            border-radius: 12px;
+            font-size: clamp(1rem, 2vw, 1.1rem);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-purple-light) 100%);
+            color: white;
+            box-shadow: 0 8px 24px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 12px 32px rgba(124, 58, 237, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--accent-purple);
+            border: 2px solid var(--accent-purple);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(124, 58, 237, 0.1);
+            border-color: var(--accent-purple-light);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, #34D399 100%);
+            color: white;
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 12px 32px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-error {
+            background: linear-gradient(135deg, var(--error) 0%, #F87171 100%);
+            color: white;
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-error:hover {
+            box-shadow: 0 12px 32px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            min-height: 40px;
+        }
+
+        /* ===== PANTALLA INICIO ===== */
+        #screenHome {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .home-container {
+            max-width: 500px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .instructions {
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid var(--accent-purple);
+            border-radius: 12px;
+            padding: 1rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .instructions.open {
+            max-height: 400px;
+            padding: 1rem;
+        }
+
+        .instructions h3 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent-purple-light);
+        }
+
+        .instructions p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        /* ===== PANTALLA CONFIGURACIÓN ===== */
+        #screenSetup {
+            justify-content: flex-start;
+        }
+
+        .setup-container {
+            max-width: 500px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .header-back {
+            background: none;
+            border: none;
+            color: var(--accent-purple);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            min-height: auto;
+        }
+
+        .header h1 {
+            font-size: clamp(1.5rem, 5vw, 2rem);
+            flex: 1;
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .slider-group label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .slider-display {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--accent-magenta);
+            text-align: center;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: var(--bg-secondary);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-magenta) 100%);
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-magenta) 100%);
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+            border: none;
+        }
+
+        .teams-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .team-setup-group {
+            background: rgba(124, 58, 237, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .team-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .team-input-group label {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        input[type="text"] {
+            padding: 0.75rem 1rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: border 0.3s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+        }
+
+        input[type="text"]::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .time-options-setup {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .time-btn {
+            flex: 1;
+            min-width: 60px;
+            padding: 0.5rem;
+            font-size: 0.85rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .time-btn.active {
+            background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-purple-light) 100%);
+            color: white;
+            border-color: var(--accent-purple-light);
+        }
+
+        /* ===== PANTALLA JUEGO ===== */
+        #screenGame {
+            justify-content: space-between;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0;
+        }
+
+        .round-info {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .round-progress {
+            display: flex;
+            gap: 0.35rem;
+        }
+
+        .round-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            transition: all 0.3s;
+        }
+
+        .round-dot.active {
+            background: var(--accent-magenta);
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        .pause-btn {
+            background: transparent;
+            border: 2px solid var(--accent-purple);
+            color: var(--accent-purple);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            min-height: auto;
+        }
+
+        .game-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .team-turn {
+            text-align: center;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .team-name {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-magenta) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .turn-label {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            animation: blink 1s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .modifier-display {
+            background: rgba(236, 72, 153, 0.15);
+            border: 2px solid var(--accent-magenta);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: center;
+            animation: slideIn 0.5s ease-out 0.3s both;
+        }
+
+        .modifier-emoji {
+            font-size: clamp(2rem, 6vw, 3rem);
+            margin-bottom: 0.5rem;
+            display: block;
+            animation: bounce 0.6s ease-in-out 0.3s both;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .modifier-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--accent-magenta);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .modifier-description {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .phrase-card {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%);
+            border: 2px solid var(--accent-purple);
+            border-radius: 16px;
+            padding: clamp(1.5rem, 5vw, 2rem);
+            text-align: center;
+            animation: slideIn 0.5s ease-out 0.6s both;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .phrase-text {
+            font-size: clamp(1.25rem, 4vw, 1.75rem);
+            font-weight: 700;
+            line-height: 1.4;
+            word-break: break-word;
+            color: var(--text-primary);
+        }
+
+        .instruction-text {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--warning);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .timer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .timer-display {
+            font-size: clamp(3rem, 12vw, 5rem);
+            font-weight: 900;
+            font-variant-numeric: tabular-nums;
+            transition: color 0.3s;
+        }
+
+        .timer-display.warning {
+            color: var(--warning);
+            animation: timerPulse 0.5s ease-in-out infinite;
+        }
+
+        .timer-display.critical {
+            color: var(--error);
+            animation: timerPulse 0.3s ease-in-out infinite;
+        }
+
+        @keyframes timerPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .timer-bar {
+            width: 100%;
+            max-width: 300px;
+            height: 6px;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .timer-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success) 0%, var(--warning) 70%, var(--error) 100%);
+            transition: width 0.1s linear;
+            border-radius: 3px;
+        }
+
+        .game-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            flex: 1;
+            min-width: 120px;
+            max-width: 200px;
+            font-size: 1.1rem;
+        }
+
+        .scoreboard {
+            background: rgba(26, 41, 60, 0.8);
+            border-top: 2px solid var(--accent-purple);
+            padding: 1rem;
+            margin: -1rem -1rem 0 -1rem;
+        }
+
+        .scoreboard-title {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .scoreboard-teams {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .scoreboard-team {
+            background: var(--bg-secondary);
+            padding: 0.75rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid var(--border);
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+
+        .scoreboard-team.active {
+            border-color: var(--accent-magenta);
+            background: rgba(236, 72, 153, 0.15);
+        }
+
+        .scoreboard-name {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .scoreboard-points {
+            font-size: 1.25rem;
+            font-weight: 900;
+            color: var(--accent-purple-light);
+        }
+
+        .scoreboard-guiner {
+            font-size: 0.75rem;
+            color: var(--accent-magenta);
+            margin-top: 0.25rem;
+        }
+
+        /* ===== PANTALLA FIN DE RONDA ===== */
+        #screenRoundEnd {
+            justify-content: center;
+            align-items: center;
+        }
+
+        .round-end-container {
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .round-end-title {
+            font-size: clamp(2rem, 6vw, 3rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-magenta) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .round-end-stats {
+            background: rgba(124, 58, 237, 0.1);
+            border: 2px solid var(--accent-purple);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stat:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--accent-magenta);
+        }
+
+        .ranking {
+            background: rgba(236, 72, 153, 0.05);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .ranking-title {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .ranking-position {
+            font-weight: 900;
+            color: var(--accent-magenta);
+            min-width: 2rem;
+        }
+
+        .ranking-name {
+            flex: 1;
+            font-weight: 600;
+            padding: 0 0.5rem;
+        }
+
+        .ranking-points {
+            color: var(--accent-purple-light);
+            font-weight: 700;
+        }
+
+        .time-change-section {
+            background: rgba(236, 72, 153, 0.1);
+            border: 1px solid var(--accent-magenta);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .time-change-title {
+            font-size: 0.9rem;
+            color: var(--accent-magenta);
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+
+        .next-team-info {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
+        .time-change-options {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* ===== PANTALLA FINAL ===== */
+        #screenFinal {
+            justify-content: center;
+            align-items: center;
+        }
+
+        .final-container {
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .champion-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .champion-emoji {
+            font-size: clamp(3rem, 10vw, 5rem);
+            animation: bounce 0.6s ease-in-out infinite;
+        }
+
+        .champion-name {
+            font-size: clamp(1.75rem, 5vw, 2.5rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-magenta) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .final-stats {
+            background: rgba(124, 58, 237, 0.1);
+            border: 2px solid var(--accent-purple);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .podium {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 1rem;
+            height: 150px;
+            margin-bottom: 1rem;
+        }
+
+        .podium-place {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+
+        .podium-medal {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .podium-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .podium-bar {
+            width: 100%;
+            background: linear-gradient(180deg, var(--accent-purple) 0%, var(--accent-purple-light) 100%);
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 900;
+            font-size: 1.5rem;
+        }
+
+        .podium-bar.first {
+            height: 120px;
+            background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
+        }
+
+        .podium-bar.second {
+            height: 90px;
+            background: linear-gradient(180deg, #C0C0C0 0%, #A9A9A9 100%);
+        }
+
+        .podium-bar.third {
+            height: 60px;
+            background: linear-gradient(180deg, #CD7F32 0%, #8B5A00 100%);
+        }
+
+        @media (min-width: 600px) {
+            .scoreboard-teams {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- PANTALLA 1: INICIO -->
+        <div id="screenHome" class="screen active">
+            <div class="home-container" style="margin-top: auto; margin-bottom: auto;">
+                <div>
+                    <div class="logo">¿QUÉ ME ESTÁS<br>CONTAINER?</div>
+                    <p class="tagline">El party game español para pasar un rato de risas</p>
+                </div>
+                <button class="btn btn-primary" onclick="goToSetup()">▶ Nueva Partida</button>
+                <button class="btn btn-secondary btn-small" onclick="toggleInstructions()">? Instrucciones</button>
+                <div id="instructions" class="instructions">
+                    <h3>¿Cómo se juega?</h3>
+                    <p>📌 Cada equipo tiene su tiempo configurado para adivinar frases.</p>
+                    <p>🎲 Hay 6 modificadores: Berenjena, Del Revés, Oski, Vocales, Lengua Fuera e Interpreta.</p>
+                    <p>✅ El jugador DESCRIBE la frase original con el modificador. Los otros ADIVINAN.</p>
+                    <p>✔ Acierto = 1 punto. Pasar = sin puntos.</p>
+                    <p>🏆 Gana quien más puntos acumule en 10 rondas.</p>
+                    <p>⏱ Cada equipo puede cambiar su tiempo antes de cada ronda.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 2: CONFIGURACIÓN -->
+        <div id="screenSetup" class="screen">
+            <div class="header">
+                <button class="header-back" onclick="goToHome()">← Atrás</button>
+                <h1>Configurar Juego</h1>
+            </div>
+            <div class="setup-container">
+                <div class="slider-group">
+                    <label for="numTeams">¿Cuántos equipos?</label>
+                    <div class="slider-display" id="teamCount">3</div>
+                    <input type="range" id="numTeams" min="2" max="6" value="3" onchange="updateTeamCount()">
+                </div>
+                <div id="teamsContainer" class="teams-inputs"></div>
+                <button class="btn btn-primary" onclick="startGame()" id="startBtn">Empezar Partida</button>
+            </div>
+        </div>
+
+        <!-- PANTALLA 3: JUEGO -->
+        <div id="screenGame" class="screen">
+            <div class="game-header">
+                <div>
+                    <div class="round-info">RONDA <span id="currentRound">1</span>/10</div>
+                    <div class="round-progress" id="roundProgress"></div>
+                </div>
+                <button class="pause-btn" onclick="pauseGame()">⏸</button>
+            </div>
+
+            <div class="game-main">
+                <div class="team-turn">
+                    <div class="team-name" id="teamName">Equipo 1</div>
+                    <div class="turn-label">ES TU TURNO</div>
+                </div>
+
+                <div class="modifier-display" id="modifierDisplay" style="display: none;">
+                    <span class="modifier-emoji" id="modifierEmoji">🍆</span>
+                    <div class="modifier-name" id="modifierName">Berenjena</div>
+                    <div class="modifier-description" id="modifierDesc">Sustituye la palabra en MAYÚSCULAS por "BERENJENA"</div>
+                </div>
+
+                <div class="phrase-card" id="phraseCard">
+                    <div class="phrase-text" id="phraseText">Cargando...</div>
+                </div>
+
+                <div class="timer">
+                    <div class="timer-display" id="timerDisplay">00:30</div>
+                    <div class="timer-bar">
+                        <div class="timer-bar-fill" id="timerBar" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+                <div class="game-buttons">
+                    <button class="btn btn-success btn-action" id="btnCorrect" onclick="markCorrect()">✔ Acierto</button>
+                    <button class="btn btn-error btn-action" id="btnPass" onclick="markPass()">✖ Pasar</button>
+                </div>
+            </div>
+
+            <div class="scoreboard">
+                <div class="scoreboard-title">Marcador</div>
+                <div class="scoreboard-teams" id="scoreboardTeams"></div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 4: FIN DE RONDA -->
+        <div id="screenRoundEnd" class="screen">
+            <div class="round-end-container">
+                <div class="round-end-title">¡Fin de Ronda!</div>
+                <div class="round-end-stats">
+                    <div class="stat">
+                        <span class="stat-label">Equipo:</span>
+                        <span class="stat-value" id="roundEndTeam">Equipo 1</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Puntos obtenidos:</span>
+                        <span class="stat-value" id="roundEndPoints">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Puntos totales:</span>
+                        <span class="stat-value" id="roundEndTotal">0</span>
+                    </div>
+                </div>
+                <div class="ranking">
+                    <div class="ranking-title">Ranking Actual</div>
+                    <div id="roundEndRanking"></div>
+                </div>
+
+                <div id="timeChangeSection" class="time-change-section" style="display: none;">
+                    <div class="time-change-title">⏱ Cambiar tiempo del próximo equipo</div>
+                    <div class="next-team-info" id="nextTeamInfo"></div>
+                    <div class="time-change-options">
+                        <button class="time-btn" data-time="150" onclick="changeNextTeamTime(150)">15s</button>
+                        <button class="time-btn" data-time="300" onclick="changeNextTeamTime(300)">30s</button>
+                        <button class="time-btn" data-time="450" onclick="changeNextTeamTime(450)">45s</button>
+                        <button class="time-btn" data-time="600" onclick="changeNextTeamTime(600)">60s</button>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="nextRoundBtn" onclick="nextRound()">Siguiente Ronda</button>
+            </div>
+        </div>
+
+        <!-- PANTALLA 5: FINAL -->
+        <div id="screenFinal" class="screen">
+            <div class="final-container">
+                <div class="champion-section">
+                    <div class="champion-emoji">👑</div>
+                    <div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">CAMPEÓN</div>
+                        <div class="champion-name" id="championName">Equipo Ganador</div>
+                    </div>
+                </div>
+
+                <div id="podiumContainer" class="podium"></div>
+
+                <div class="final-stats">
+                    <div class="stat">
+                        <span class="stat-label">Puntos totales:</span>
+                        <span class="stat-value" id="finalPoints">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Tarjetas Güiner:</span>
+                        <span class="stat-value" id="finalGuiner">0</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; flex-direction: column;">
+                    <button class="btn btn-primary" onclick="goToHome()">🏠 Menú Principal</button>
+                    <button class="btn btn-secondary" onclick="goToSetup()">🎮 Nueva Partida</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== FRASES (200 ESPAÑOLAS) =====
+        const frases = [
+            "A quien MADRUGA, Dios le ayuda",
+            "Más vale PÁJARO en mano que ciento volando",
+            "En boca CERRADA no entran moscas",
+            "A caballo REGALADO no le mires el diente",
+            "Cría CUERVOS y te sacarán los ojos",
+            "Aunque la MONA se vista de seda, mona se queda",
+            "Ojos que no ven, CORAZÓN que no siente",
+            "De tal PALO, tal astilla",
+            "El que busca, ENCUENTRA",
+            "A buen HAMBRE no hay pan duro",
+            "Dime con quién ANDAS y te diré quién eres",
+            "La CURIOSIDAD mató al gato",
+            "No por mucho madrugar AMANECE más temprano",
+            "Zapatero a tus ZAPATOS",
+            "El que la SIGUE la consigue",
+            "Agua que no has de beber, DÉJALA correr",
+            "El MUNDO es un pañuelo",
+            "A lo hecho, PECHO",
+            "Por la BOCA muere el pez",
+            "Al mal tiempo, BUENA cara",
+            "Año de NIEVES, año de bienes",
+            "Cuando el río suena, AGUA lleva",
+            "Del dicho al hecho hay un TRECHO",
+            "El que guarda, SIEMPRE tiene",
+            "Nadie es PROFETA en su tierra",
+            "Quien bien te quiere, te hará LLORAR",
+            "Piensa mal y ACERTARÁS",
+            "Mucho RUIDO y pocas nueces",
+            "Quien tiene boca se EQUIVOCA",
+            "Donde las dan, las TOMAN",
+            "Quien mucho abarca, POCO aprieta",
+            "No hay mal que por bien no VENGA",
+            "A la tercera va la VENCIDA",
+            "Camarón que se duerme se lo lleva la CORRIENTE",
+            "Cada LOCO con su tema",
+            "La OCASIÓN la pintan calva",
+            "Más vale MAÑA que fuerza",
+            "Perro LADRADOR no muerde",
+            "En casa del herrero, CUCHILLO de palo",
+            "A la vejez, VIRUELAS",
+            "Mucha MERMELADA para tan poco pan",
+            "A perro FLACO, todo son pulgas",
+            "El tiempo todo lo CURA",
+            "Quien no arriesga, no GANA",
+            "Árbol que nace torcido, jamás su rama ENDEREZA",
+            "Donde hay CONFIANZA, da asco",
+            "Nadie da DUROS a cuatro pesetas",
+            "A rey MUERTO, rey puesto",
+            "Las desgracias nunca vienen SOLAS",
+            "Quien a buen árbol se arrima, buena SOMBRA le cobija",
+            "Un día cojo la PUERTA y me voy",
+            "Te vas a enterar de lo que vale un PEINE",
+            "Aquí hay GATO encerrado",
+            "Se te va la OLLA",
+            "Tirar la CASA por la ventana",
+            "Estar a dos VELAS",
+            "Montar un POLLO",
+            "Pagar el PATO",
+            "Cantar las CUARENTA",
+            "Dar la LATA",
+            "Estar como una REGADERA",
+            "Dormir a pierna SUELTA",
+            "Meter la PATA",
+            "Tener mala LECHE",
+            "Ir al GRANO",
+            "Ser la oveja NEGRA",
+            "Poner las CARTAS sobre la mesa",
+            "Andar con pies de PLOMO",
+            "Perder los PAPELES",
+            "Tirar la TOALLA",
+            "Ver las orejas al LOBO",
+            "Estar como un QUESO",
+            "Cortar el BACALAO",
+            "Chuparse los DEDOS",
+            "Costar un OJO de la cara",
+            "Estar sin BLANCA",
+            "Hacerse el SUECO",
+            "No tener PELOS en la lengua",
+            "Echar LEÑA al fuego",
+            "Empinar el CODO",
+            "Estar hasta en la SOPA",
+            "Dar en el CLAVO",
+            "Hacer de TRIPAS corazón",
+            "Me tienes hasta la CORONILLA",
+            "Estar con la mosca detrás de la OREJA",
+            "Buscar tres PIES al gato",
+            "No me des la BRASA",
+            "Hablando del rey de ROMA",
+            "Armarse la MARIMORENA",
+            "Salirse con la SUYA",
+            "Tener memoria de PEZ",
+            "Quedarse en el CHASIS",
+            "Llover a CÁNTAROS",
+            "Faltarle un HERVOR",
+            "Meterse en camisas de once VARAS",
+            "Salirse por la TANGENTE",
+            "Tener la SARTÉN por el mango",
+            "Ver los toros desde la BARRERA",
+            "Estar en el CANDELERO",
+            "Dar la PALIZA",
+            "Ponerse las BOTAS",
+            "Irse por las RAMAS",
+            "Tomar el PELO",
+            "Ser un FANTASMA",
+            "Cantar el POZO",
+            "Que te vi poner la cara como un MAPA",
+            "Manta y CARRETERA",
+            "Ser un BIENQUEDA",
+            "Estar en la PARRA",
+            "No dar pie con BOLA",
+            "Dar una de cal y otra de ARENA",
+            "Coger el toro por los CUERNOS",
+            "Echar un CABLE",
+            "Estar en las NUBES",
+            "Hacer la vista GORDA",
+            "Irse de la LENGUA",
+            "Llevarse el GATO al agua",
+            "No pegar OJO",
+            "Ponérsele a uno los pelos de PUNTA",
+            "Saber a GLORIA",
+            "Sacar de QUICIO",
+            "Ver todo de color de ROSA",
+            "Hacer castillos en el AIRE",
+            "Salvarse por los PELOS",
+            "Quedarse de PIEDRA",
+            "Estar en su SALSA",
+            "Quedarse con el SANTO y la limosna",
+            "Ponérselo en BANDEJA de plata",
+            "Hasta luego, LUCAS",
+            "¿Pero qué INVENTO es este?",
+            "Si hay que ir se va, pero ir pa na es TONTERÍA",
+            "¡Abracadabra, PATA de cabra!",
+            "Un poquito de POR FAVOR",
+            "¡A jugar, MISTER!",
+            "¡Cómo están los MÁQUINAS!",
+            "¡Qué fuerte, qué FUERTE!",
+            "Te vas a HABER un follón",
+            "¡Si me queréis, IRSE!",
+            "Yo por mi hija MATO",
+            "¡Pim, pam, TOMA Lacasitos!",
+            "Súper, dame el MINUTO de oro",
+            "¡La que se ha LIADO!",
+            "¡Es que me MEO!",
+            "¡Anda ya, HOMBRE!",
+            "¡Menuda MOVIDA!",
+            "¡A la calle, a la CALLE!",
+            "¡Eso es verdad verdadera, OYE!",
+            "¡Nos van a dar las UVAS!",
+            "¡Pero qué DICES, loco!",
+            "¡No me cuentes MILONGAS!",
+            "¡A otra cosa, MARIPOSA!",
+            "¡Aquí se viene a JUGAR!",
+            "¡A casita a DORMIR!",
+            "¡Pero esto qué ES!",
+            "¡Llegar y BESAR el santo!",
+            "¡Estar de RODRÍGUEZ!",
+            "¡Noches de desenfreno, mañanas de BENADRYL!",
+            "¡Sujétame el CUBATA!",
+            "¡A tomar por SACO!",
+            "¡Madre mía del AMOR hermoso!",
+            "¡Me caes como una patata en el ESTÓMAGO!",
+            "¡Con la iglesia hemos TOPADO!",
+            "¡Me quedado muerta, MARICARMEN!",
+            "¡Pasa palabra, COMPAÑERO!",
+            "¡Aquí hay mucho MISTERO!",
+            "¡Menudo MERENGUE!",
+            "¡Ese es mi CHICO!",
+            "¡Madre mía, qué JALEO!",
+            "Estar chupado como un CARAMELO",
+            "Buscar una aguja en un PAJAR",
+            "Dar gato por LIEBRE",
+            "Tener más cuento que CALLEJA",
+            "Estar con el agua al CUELLO",
+            "Ver el cielo ABIERTO",
+            "Cría fama y ÉCHATE a dormir",
+            "Poner los puntos sobre las ÍES",
+            "Hacerse la boca AGUA",
+            "Perder el TREN",
+            "De perdidos al RÍO",
+            "Dormirse en los LAURELES",
+            "Dar calabazas al CHICO",
+            "Romper el HIELO",
+            "Estar hecho un TRAPO",
+            "Ser harina de otro COSTAL",
+            "Gastar la pólvora en SALVAVIDAS",
+            "Estar como pez en el AGUA",
+            "Tocarse las NARICES",
+            "Poner el grito en el CIELO",
+            "Ser el ombligo del MUNDO",
+            "Nacer con una estrella en la FRENTE",
+            "No tener ni PIE ni cabeza",
+            "Apagar el fuego con GASOLINA",
+            "Tirar la piedra y esconder la MANO",
+            "Estar a la QUE salta",
+            "Comerse el TARRO",
+            "Estar hasta los TOPES",
+            "Caer del GUINDO",
+            "Hacer tabla RASA",
+            "Ir de GUATEMALA a guatepeor",
+            "Poner una pica en FLANDES",
+            "Desvestir a un santo para VESTIR a otro",
+            "Aguantar la VELA",
+            "Andarse por las RAMAS",
+            "Llegar a buenas HORAS",
+            "Dar en la DIANA",
+            "No ser nada del otro JUEVES",
+            "Tener agallas para VOLAR",
+            "Darle la vuelta a la TORTILLA",
+            "Cruzar el CHARCO",
+            "Quitarse un peso de ENCIMA",
+            "No dejar títere con CABEZA",
+            "Bajar la GUARDIA",
+            "Dar la espalda al PROBLEMA",
+            "Levantar la LIEBRE",
+            "Meter el dedo en la LLAGA",
+            "Estar en la cuerda FLOJA",
+            "Hacer leña del árbol CAÍDO",
+            "Jugar con FUEGO",
+            "Llevarse una DECEPCIÓN",
+            "Pedir peras al OLMO",
+            "Ponérsele la carne de GALLINA",
+            "Sacar las uñas por ALGUIEN",
+            "Ser un cero a la IZQUIERDA",
+            "Tener pájaros en la CABEZA",
+            "Ver las estrellas de UN golpe",
+            "Volver a las ANDADAS",
+            "Estar al pie del CAÑÓN",
+            "Cerrar con broche de ORO"
+        ];
+
+        // ===== MODIFICADORES =====
+        const modifiers = [
+            { 
+                id: 0, 
+                emoji: "🍆", 
+                name: "BERENJENA", 
+                type: "berenjena",
+                desc: "Sustituye la palabra en MAYÚSCULAS por 'BERENJENA'"
+            },
+            { 
+                id: 1, 
+                emoji: "🔄", 
+                name: "DEL REVÉS", 
+                type: "reverse",
+                desc: "Lee la frase de atrás hacia adelante palabra por palabra"
+            },
+            { 
+                id: 2, 
+                emoji: "🤪", 
+                name: "OSKI", 
+                type: "oski",
+                desc: "Añade '-OSKI' al final de cada palabra"
+            },
+            { 
+                id: 3, 
+                emoji: "🅰️", 
+                name: "AEIOU", 
+                type: "vowels",
+                desc: "Cambia todas las vocales por una vocal aleatoria"
+            },
+            { 
+                id: 4, 
+                emoji: "👅", 
+                name: "LENGUA FUERA", 
+                type: "tongue",
+                desc: "¡SACANDO LA LENGUA!"
+            },
+            { 
+                id: 5, 
+                emoji: "🎭", 
+                name: "INTERPRETA", 
+                type: "mime",
+                desc: "¡SIN SONIDO - MÍMICA!"
+            }
+        ];
+
+        // ===== ESTADO GLOBAL =====
+        let gameState = {
+            teams: [],
+            teamTimes: {}, // { "Equipo 1": 300, "Equipo 2": 450, ... }
+            currentRound: 1,
+            currentTeamIndex: 0,
+            timerInterval: null,
+            timeLeft: 300,
+            totalTime: 300,
+            isRunning: false,
+            usedPhrases: [],
+            roundScores: {},
+            totalScores: {},
+            guiner: {},
+            roundStarted: false,
+            currentPhrase: "",
+            currentModifier: null
+        };
+
+        // ===== FUNCIONES PRINCIPALES =====
+        function goToHome() {
+            showScreen("screenHome");
+            resetGame();
+        }
+
+        function goToSetup() {
+            showScreen("screenSetup");
+            updateTeamCount();
+        }
+
+        function toggleInstructions() {
+            const el = document.getElementById("instructions");
+            el.classList.toggle("open");
+        }
+
+        function updateTeamCount() {
+            const count = parseInt(document.getElementById("numTeams").value);
+            document.getElementById("teamCount").textContent = count;
+            
+            const container = document.getElementById("teamsContainer");
+            container.innerHTML = "";
+            
+            for (let i = 1; i <= count; i++) {
+                const div = document.createElement("div");
+                div.className = "team-setup-group";
+                div.innerHTML = `
+                    <div class="team-input-group">
+                        <label for="team${i}">Equipo ${i}</label>
+                        <input type="text" id="team${i}" placeholder="Ej: Los Campeones" maxlength="20">
+                    </div>
+                    <div class="team-input-group">
+                        <label for="time${i}">⏱ Tiempo</label>
+                        <div class="time-options-setup">
+                            <button class="time-btn" data-team="${i}" data-time="150" onclick="selectTeamTime(${i}, 150)">15s</button>
+                            <button class="time-btn" data-team="${i}" data-time="300" onclick="selectTeamTime(${i}, 300)">30s</button>
+                            <button class="time-btn active" data-team="${i}" data-time="300" onclick="selectTeamTime(${i}, 300)">30s</button>
+                            <button class="time-btn" data-team="${i}" data-time="450" onclick="selectTeamTime(${i}, 450)">45s</button>
+                            <button class="time-btn" data-team="${i}" data-time="600" onclick="selectTeamTime(${i}, 600)">60s</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            }
+            
+            // Inicializar tiempos por defecto
+            for (let i = 1; i <= count; i++) {
+                gameState.teamTimes[`Equipo ${i}`] = 300; // 30 segundos por defecto
+            }
+        }
+
+        function selectTeamTime(teamIndex, seconds) {
+            // Actualizar visual
+            document.querySelectorAll(`[data-team="${teamIndex}"]`).forEach(btn => {
+                btn.classList.remove("active");
+                if (parseInt(btn.dataset.time) === seconds) {
+                    btn.classList.add("active");
+                }
+            });
+            
+            // Guardar tiempo (se usará cuando se inicie el juego con nombres reales)
+        }
+
+        function startGame() {
+            const count = parseInt(document.getElementById("numTeams").value);
+            const teams = [];
+            
+            for (let i = 1; i <= count; i++) {
+                const name = document.getElementById(`team${i}`).value.trim() || `Equipo ${i}`;
+                teams.push(name);
+                
+                // Obtener tiempo configurado
+                const timeBtns = document.querySelectorAll(`[data-team="${i}"]`);
+                let selectedTime = 300; // Por defecto
+                timeBtns.forEach(btn => {
+                    if (btn.classList.contains("active")) {
+                        selectedTime = parseInt(btn.dataset.time);
+                    }
+                });
+                gameState.teamTimes[name] = selectedTime;
+            }
+            
+            gameState.teams = teams;
+            gameState.currentRound = 1;
+            gameState.currentTeamIndex = 0;
+            gameState.usedPhrases = [];
+            gameState.roundScores = {};
+            gameState.totalScores = {};
+            gameState.guiner = {};
+            
+            teams.forEach(team => {
+                gameState.totalScores[team] = 0;
+                gameState.guiner[team] = 0;
+            });
+            
+            showScreen("screenGame");
+            initializeGame();
+        }
+
+        function initializeGame() {
+            setupRoundProgress();
+            startNewTurn();
+        }
+
+        function setupRoundProgress() {
+            const container = document.getElementById("roundProgress");
+            container.innerHTML = "";
+            for (let i = 0; i < 10; i++) {
+                const dot = document.createElement("div");
+                dot.className = `round-dot ${i === 0 ? 'active' : ''}`;
+                dot.id = `dot-${i}`;
+                container.appendChild(dot);
+            }
+        }
+
+        function startNewTurn() {
+            const team = gameState.teams[gameState.currentTeamIndex];
+            gameState.totalTime = gameState.teamTimes[team];
+            gameState.timeLeft = gameState.totalTime;
+            gameState.isRunning = true;
+            gameState.roundScores[team] = 0;
+            gameState.usedPhrases = [];
+            gameState.roundStarted = false;
+            
+            document.getElementById("teamName").textContent = team;
+            document.getElementById("currentRound").textContent = gameState.currentRound;
+            
+            updateScoreboard();
+            showNextPhrase();
+            
+            // Mostrar modificador por 2 segundos
+            setTimeout(() => {
+                gameState.roundStarted = true;
+                startTimer();
+            }, 2000);
+        }
+
+        function selectRandomModifier() {
+            return modifiers[Math.floor(Math.random() * modifiers.length)];
+        }
+
+        function showNextPhrase() {
+            let phrase;
+            do {
+                phrase = frases[Math.floor(Math.random() * frases.length)];
+            } while (gameState.usedPhrases.includes(phrase));
+            
+            gameState.usedPhrases.push(phrase);
+            gameState.currentPhrase = phrase;
+            gameState.currentModifier = selectRandomModifier();
+            
+            displayPhrase();
+        }
+
+        function displayPhrase() {
+            const modifier = gameState.currentModifier;
+            const phrase = gameState.currentPhrase;
+            
+            document.getElementById("modifierEmoji").textContent = modifier.emoji;
+            document.getElementById("modifierName").textContent = modifier.name;
+            document.getElementById("modifierDesc").textContent = modifier.desc;
+            document.getElementById("modifierDisplay").style.display = 'block';
+            
+            // SIEMPRE mostrar la frase ORIGINAL
+            // El modificador solo dice CÓMO describir
+            document.getElementById("phraseText").textContent = phrase;
+        }
+
+        function startTimer() {
+            if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+            
+            gameState.timerInterval = setInterval(() => {
+                gameState.timeLeft--;
+                updateTimerDisplay();
+                
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(gameState.timerInterval);
+                    endTurn();
+                }
+            }, 100);
+        }
+
+        function updateTimerDisplay() {
+            const display = document.getElementById("timerDisplay");
+            const bar = document.getElementById("timerBar");
+            const totalSeconds = Math.ceil(gameState.timeLeft / 10);
+            const mm = Math.floor(totalSeconds / 60);
+            const ss = totalSeconds % 60;
+            const formatted = `${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+            
+            display.textContent = formatted;
+            bar.style.width = (gameState.timeLeft / gameState.totalTime) * 100 + "%";
+            
+            display.classList.remove("warning", "critical");
+            const criticalThreshold = gameState.totalTime * 0.17;
+            const warningThreshold = gameState.totalTime * 0.33;
+            
+            if (gameState.timeLeft <= criticalThreshold) display.classList.add("critical");
+            else if (gameState.timeLeft <= warningThreshold) display.classList.add("warning");
+        }
+
+        function markCorrect() {
+            if (!gameState.roundStarted) return;
+            const team = gameState.teams[gameState.currentTeamIndex];
+            gameState.roundScores[team]++;
+            showNextPhrase();
+        }
+
+        function markPass() {
+            if (!gameState.roundStarted) return;
+            showNextPhrase();
+        }
+
+        function pauseGame() {
+            if (gameState.isRunning) {
+                clearInterval(gameState.timerInterval);
+                gameState.isRunning = false;
+            } else {
+                gameState.isRunning = true;
+                startTimer();
+            }
+        }
+
+        function endTurn() {
+            gameState.isRunning = false;
+            const team = gameState.teams[gameState.currentTeamIndex];
+            const points = gameState.roundScores[team];
+            gameState.totalScores[team] += points;
+            
+            document.getElementById("roundEndTeam").textContent = team;
+            document.getElementById("roundEndPoints").textContent = points;
+            document.getElementById("roundEndTotal").textContent = gameState.totalScores[team];
+            updateRoundEndRanking();
+            
+            // Mostrar opción de cambiar tiempo si hay siguiente equipo
+            const nextTeamIndex = gameState.currentTeamIndex + 1;
+            if (nextTeamIndex < gameState.teams.length && gameState.currentRound < 10) {
+                const nextTeam = gameState.teams[nextTeamIndex];
+                document.getElementById("nextTeamInfo").textContent = `Próximo: ${nextTeam}`;
+                document.getElementById("timeChangeSection").style.display = 'block';
+                
+                const currentTime = gameState.teamTimes[nextTeam];
+                document.querySelectorAll(".time-change-options .time-btn").forEach(btn => {
+                    btn.classList.remove("active");
+                    if (parseInt(btn.dataset.time) === currentTime) {
+                        btn.classList.add("active");
+                    }
+                });
+            } else {
+                document.getElementById("timeChangeSection").style.display = 'none';
+            }
+            
+            showScreen("screenRoundEnd");
+        }
+
+        function changeNextTeamTime(seconds) {
+            const nextTeamIndex = gameState.currentTeamIndex + 1;
+            if (nextTeamIndex < gameState.teams.length) {
+                const nextTeam = gameState.teams[nextTeamIndex];
+                gameState.teamTimes[nextTeam] = seconds;
+                
+                // Actualizar visual
+                document.querySelectorAll(".time-change-options .time-btn").forEach(btn => {
+                    btn.classList.remove("active");
+                    if (parseInt(btn.dataset.time) === seconds) {
+                        btn.classList.add("active");
+                    }
+                });
+            }
+        }
+
+        function updateRoundEndRanking() {
+            const ranking = Object.entries(gameState.totalScores)
+                .sort((a, b) => b[1] - a[1])
+                .map((entry, idx) => ({
+                    name: entry[0],
+                    points: entry[1],
+                    pos: idx + 1
+                }));
+            
+            const container = document.getElementById("roundEndRanking");
+            container.innerHTML = ranking.map(item => `
+                <div class="ranking-item">
+                    <span class="ranking-position">#${item.pos}</span>
+                    <span class="ranking-name">${item.name}</span>
+                    <span class="ranking-points">${item.points}pts</span>
+                </div>
+            `).join("");
+        }
+
+        function nextRound() {
+            if (gameState.currentTeamIndex < gameState.teams.length - 1) {
+                gameState.currentTeamIndex++;
+                showScreen("screenGame");
+                startNewTurn();
+            } else {
+                if (gameState.currentRound < 10) {
+                    gameState.currentRound++;
+                    gameState.currentTeamIndex = 0;
+                    assignGuiners();
+                    showScreen("screenGame");
+                    startNewTurn();
+                } else {
+                    finishGame();
+                }
+            }
+        }
+
+        function assignGuiners() {
+            const roundScores = {};
+            gameState.teams.forEach(team => {
+                roundScores[team] = gameState.roundScores[team] || 0;
+            });
+            
+            const maxScore = Math.max(...Object.values(roundScores));
+            const winners = Object.entries(roundScores).filter(e => e[1] === maxScore).map(e => e[0]);
+            
+            if (winners.length === 1 && maxScore > 0) {
+                gameState.guiner[winners[0]]++;
+            }
+        }
+
+        function finishGame() {
+            const ranking = Object.entries(gameState.totalScores)
+                .sort((a, b) => b[1] - a[1]);
+            
+            const champion = ranking[0][0];
+            document.getElementById("championName").textContent = champion;
+            document.getElementById("finalPoints").textContent = gameState.totalScores[champion];
+            document.getElementById("finalGuiner").textContent = gameState.guiner[champion];
+            
+            const podiumContainer = document.getElementById("podiumContainer");
+            podiumContainer.innerHTML = "";
+            
+            const medals = ["🥇", "🥈", "🥉"];
+            const podiumClasses = ["first", "second", "third"];
+            
+            ranking.slice(0, 3).forEach((entry, idx) => {
+                const [name, score] = entry;
+                const div = document.createElement("div");
+                div.className = "podium-place";
+                div.innerHTML = `
+                    <div class="podium-medal">${medals[idx]}</div>
+                    <div class="podium-name">${name}</div>
+                    <div class="podium-bar ${podiumClasses[idx]}">${score}</div>
+                `;
+                podiumContainer.appendChild(div);
+            });
+            
+            showScreen("screenFinal");
+        }
+
+        function updateScoreboard() {
+            const container = document.getElementById("scoreboardTeams");
+            container.innerHTML = gameState.teams.map(team => `
+                <div class="scoreboard-team ${team === gameState.teams[gameState.currentTeamIndex] ? 'active' : ''}">
+                    <div class="scoreboard-name">${team}</div>
+                    <div class="scoreboard-points">${gameState.totalScores[team] || 0}</div>
+                    <div class="scoreboard-guiner">🏆 ${gameState.guiner[team] || 0}</div>
+                </div>
+            `).join("");
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+            document.getElementById(screenId).classList.add("active");
+        }
+
+        function resetGame() {
+            clearInterval(gameState.timerInterval);
+            gameState = {
+                teams: [],
+                teamTimes: {},
+                currentRound: 1,
+                currentTeamIndex: 0,
+                timerInterval: null,
+                timeLeft: 300,
+                totalTime: 300,
+                isRunning: false,
+                usedPhrases: [],
+                roundScores: {},
+                totalScores: {},
+                guiner: {},
+                roundStarted: false,
+                currentPhrase: "",
+                currentModifier: null
+            };
+        }
+
+        // Inicializar
+        updateTeamCount();
+    </script>
+</body>
+</html>

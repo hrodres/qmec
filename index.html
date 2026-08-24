@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="¿Qué me estás container? — party game de frases españolas (v2)">
+    <title>¿Qué me estás container?</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- PANTALLA 1: INICIO -->
+        <div id="screenHome" class="screen active">
+            <div class="home-container" style="margin-top: auto; margin-bottom: auto;">
+                <div>
+                    <div class="logo">¿QUÉ ME ESTÁS<br>CONTAINER?</div>
+                    <p class="tagline">El party game español para pasar un rato de risas</p>
+                </div>
+                <button class="btn btn-primary" onclick="goToSetup()">▶ Nueva Partida</button>
+                <button class="btn btn-secondary btn-small" onclick="toggleInstructions()">? Instrucciones</button>
+                <div id="instructions" class="instructions">
+                    <h3>¿Cómo se juega?</h3>
+                    <p>📌 Cada equipo tiene su tiempo configurado para adivinar frases.</p>
+                    <p>🎲 Hay 6 modificadores: Berenjena, Del Revés, Oski, Vocales, Lengua Fuera e Interpreta.</p>
+                    <p>✅ El jugador DESCRIBE la frase original con el modificador. Los otros ADIVINAN.</p>
+                    <p>✔ Acierto = 1 punto. Pasar = sin puntos.</p>
+                    <p>🏆 Gana quien más puntos acumule en 10 rondas.</p>
+                    <p>⏱ El modificador se elige UNA vez al inicio del turno del equipo y se mantiene fijo durante TODO el turno (v2).</p>
+                    <p>🏅 Al acabar cada ronda, el equipo con más aciertos recibe una tarjeta güiner (en empate, nadie la recibe).</p>
+                    <p>⏱ Cada equipo puede cambiar su tiempo antes de cada ronda.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 2: CONFIGURACIÓN -->
+        <div id="screenSetup" class="screen">
+            <div class="header">
+                <button class="header-back" onclick="goToHome()">← Atrás</button>
+                <h1>Configurar Juego</h1>
+            </div>
+            <div class="setup-container">
+                <div class="slider-group">
+                    <label for="numTeams">¿Cuántos equipos?</label>
+                    <div class="slider-display" id="teamCount">3</div>
+                    <input type="range" id="numTeams" min="2" max="6" value="3"
+                           oninput="updateTeamCount()" onchange="updateTeamCount()">
+                </div>
+                <div id="teamsContainer" class="teams-inputs"></div>
+                <button class="btn btn-primary" onclick="startGame()" id="startBtn">Empezar Partida</button>
+            </div>
+        </div>
+
+        <!-- PANTALLA 3: JUEGO -->
+        <div id="screenGame" class="screen">
+            <div class="game-header">
+                <div>
+                    <div class="round-info">RONDA <span id="currentRound">1</span>/10</div>
+                    <div class="round-progress" id="roundProgress"></div>
+                </div>
+                <button class="pause-btn" id="pauseBtn" aria-label="Pausar" onclick="pauseGame()">⏸</button>
+            </div>
+
+            <div class="game-main">
+                <div class="team-turn">
+                    <div class="team-name" id="teamName">Equipo 1</div>
+                    <div class="turn-label">ES TU TURNO</div>
+                </div>
+
+                <div class="modifier-display" id="modifierDisplay" style="display: none;">
+                    <span class="modifier-emoji" id="modifierEmoji">🍆</span>
+                    <div class="modifier-name" id="modifierName">Berenjena</div>
+                    <div class="modifier-description" id="modifierDesc">Sustituye la palabra en MAYÚSCULAS por "BERENJENA"</div>
+                </div>
+
+                <div class="live-hits" id="liveHits" aria-live="polite">Aciertos: 0</div>
+
+                <div class="phrase-card" id="phraseCard">
+                    <div class="phrase-text" id="phraseText">Cargando...</div>
+                </div>
+
+                <div class="phrase-toggle-row">
+                    <button type="button" class="btn btn-secondary btn-small" id="togglePhraseBtn" onclick="togglePhrase()">🙈 Ocultar frase</button>
+                </div>
+
+                <div class="timer">
+                    <div class="timer-display" id="timerDisplay" role="timer" aria-live="assertive">00:30</div>
+                    <div class="timer-bar">
+                        <div class="timer-bar-fill" id="timerBar" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+                <div class="game-buttons">
+                    <button class="btn btn-success btn-action" id="btnCorrect" onclick="markCorrect()">✔ Acierto</button>
+                    <button class="btn btn-error btn-action" id="btnPass" onclick="markPass()">✖ Pasar</button>
+                </div>
+            </div>
+
+            <div class="scoreboard">
+                <div class="scoreboard-title">Marcador</div>
+                <div class="scoreboard-teams" id="scoreboardTeams"></div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 4: FIN DE RONDA -->
+        <div id="screenRoundEnd" class="screen">
+            <div class="round-end-container">
+                <div class="round-end-title">¡Fin de Ronda!</div>
+                <div class="round-end-stats">
+                    <div class="stat">
+                        <span class="stat-label">Equipo:</span>
+                        <span class="stat-value" id="roundEndTeam">Equipo 1</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Puntos obtenidos:</span>
+                        <span class="stat-value" id="roundEndPoints">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Puntos totales:</span>
+                        <span class="stat-value" id="roundEndTotal">0</span>
+                    </div>
+                </div>
+                <div class="ranking">
+                    <div class="ranking-title">Ranking Actual</div>
+                    <div id="roundEndRanking"></div>
+                </div>
+
+                <div id="timeChangeSection" class="time-change-section" style="display: none;">
+                    <div class="time-change-title">⏱ Cambiar tiempo del próximo equipo</div>
+                    <div class="next-team-info" id="nextTeamInfo"></div>
+                    <div class="time-change-options">
+                        <button type="button" class="time-btn" data-time="150" onclick="changeNextTeamTime(150)">15s</button>
+                        <button type="button" class="time-btn" data-time="300" onclick="changeNextTeamTime(300)">30s</button>
+                        <button type="button" class="time-btn" data-time="450" onclick="changeNextTeamTime(450)">45s</button>
+                        <button type="button" class="time-btn" data-time="600" onclick="changeNextTeamTime(600)">60s</button>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="nextRoundBtn" onclick="nextRound()">Siguiente Ronda</button>
+            </div>
+        </div>
+
+        <!-- PANTALLA 5: FINAL -->
+        <div id="screenFinal" class="screen">
+            <div class="final-container">
+                <div class="champion-section">
+                    <div class="champion-emoji">👑</div>
+                    <div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">CAMPEÓN</div>
+                        <div class="champion-name" id="championName">Equipo Ganador</div>
+                    </div>
+                </div>
+
+                <div id="podiumContainer" class="podium"></div>
+
+                <div class="final-stats">
+                    <div class="stat">
+                        <span class="stat-label">Puntos totales:</span>
+                        <span class="stat-value" id="finalPoints">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Tarjetas Güiner:</span>
+                        <span class="stat-value" id="finalGuiner">0</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; flex-direction: column;">
+                    <button class="btn btn-primary" onclick="goToHome()">🏠 Menú Principal</button>
+                    <button class="btn btn-secondary" onclick="goToSetup()">🎮 Nueva Partida</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts en orden (sin ES modules para que funcione en file://) -->
+    <script src="js/frases.js"></script>
+    <script src="js/modificadores.js"></script>
+    <script src="js/estado.js"></script>
+    <script src="js/temporizador.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/juego.js"></script>
+</body>
+</html>
