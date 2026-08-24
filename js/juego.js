@@ -125,10 +125,11 @@ function startNewTurn() {
     gameState.isRunning = false;   // aun no corre: esperamos al dado
     gameState.roundStarted = false;
     gameState.roundScores[team] = 0;
-    gameState.phraseBag = [];
+    // NOTA: el mazo (phraseBag) es GLOBAL de la partida: se baraja UNA vez
+    // al inicio (startGame) y solo se re-mezcla cuando se agotan todas las
+    // tarjetas (refillBag dentro de showNextPhrase). NO se resetea por turno.
     gameState.turnHistory = [];
     gameState.turnPoints = 0;
-    refillBag();
 
     document.getElementById("teamName").textContent = team; // textContent (seguro)
     document.getElementById("currentRound").textContent = gameState.currentRound;
@@ -552,6 +553,11 @@ function startGame() {
         // mapear el tiempo seleccionado por indice al displayName
         gameState.teamTimes[team] = times[idx + 1] || 300;
     });
+
+    // Mazo global: barajar TODAS las tarjetas UNA vez al iniciar la partida.
+    // Cuando se agoten, showNextPhrase() re-mezcla y sigue (refillBag).
+    gameState.phraseBag = [];
+    refillBag();
 
     showScreen("screenGame");
     setupRoundProgress();

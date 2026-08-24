@@ -129,8 +129,8 @@ function renderPodio(ranking) {
 }
 
 // ---- Resumen del turno (frases acertadas/falladas/descartadas + correccion) ----
-// Al finalizar el turno las tarjetas se reordenan ALEATORIAMENTE (feature);
-// cada fila conserva el indice real en turnHistory para el boton 🔄.
+// Las tarjetas se muestran EN EL ORDEN EN QUE SALIERON durante el turno
+// (decision de Hector 2026-08-24: el barajado aqui generaba caos al corregir).
 function renderTurnSummary() {
     const list = document.getElementById("turnSummaryList");
     if (!list) return;
@@ -139,16 +139,7 @@ function renderTurnSummary() {
     document.getElementById("turnSummaryPoints").textContent = gameState.turnPoints || 0;
 
     list.innerHTML = "";
-    // Orden aleatorio: barajar (Fisher-Yates) la lista de indices reales
-    const indices = gameState.turnHistory.map((_, i) => i);
-    for (let i = indices.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        const tmp = indices[i];
-        indices[i] = indices[j];
-        indices[j] = tmp;
-    }
-    indices.forEach(idx => {
-        const item = gameState.turnHistory[idx];
+    gameState.turnHistory.forEach((item, idx) => {
         const isDiscarded = item.discarded === true;
         const isCorrect = !isDiscarded && item.correct === true;
         const isPending = !isDiscarded && item.correct === null;
