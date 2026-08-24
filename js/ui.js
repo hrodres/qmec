@@ -127,6 +127,29 @@ function renderPodio(ranking) {
     });
 }
 
+// ---- Resumen del turno (frases acertadas/falladas + correccion) ----
+function renderTurnSummary() {
+    const list = document.getElementById("turnSummaryList");
+    if (!list) return;
+    const team = gameState.teams[gameState.currentTeamIndex];
+    document.getElementById("turnSummaryTeam").textContent = team; // textContent (seguro)
+    document.getElementById("turnSummaryPoints").textContent = gameState.turnPoints || 0;
+
+    list.innerHTML = "";
+    gameState.turnHistory.forEach((item, idx) => {
+        const isCorrect = item.correct === true;
+        const isPending = item.correct === null;
+        const row = document.createElement("div");
+        row.className = "turn-summary-item " + (isCorrect ? "ok" : "miss");
+        row.innerHTML = `
+            <span class="turn-summary-icon">${isCorrect ? "✔" : (isPending ? "·" : "✖")}</span>
+            <span class="turn-summary-phrase">${esc(item.phrase)}</span>
+            <button type="button" class="turn-summary-toggle" onclick="toggleTurnResult(${idx})" aria-label="Corregir">🔄</button>
+        `;
+        list.appendChild(row);
+    });
+}
+
 // ---- Confirmacion al salir con partida en curso (C6) ----
 function maybeConfirmExit() {
     if (gameState.isRunning || gameState.roundStarted) {
@@ -139,6 +162,6 @@ if (typeof module !== "undefined") {
     module.exports = {
         showScreen, updateScoreboard, updateRoundProgress, setupRoundProgress,
         setLiveHits, setPhraseVisible, togglePhrase, vibrate,
-        updateRoundEndRanking, renderPodio, maybeConfirmExit
+        updateRoundEndRanking, renderPodio, maybeConfirmExit, renderTurnSummary
     };
 }

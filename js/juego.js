@@ -56,21 +56,12 @@ function showNextPhrase() {
         refillBag();
     }
     gameState.currentPhrase = gameState.phraseBag.pop();
+    // Registro para el resumen del turno (pendiente: null -> se resuelve al pulsar)
+    gameState.turnHistory.push({ phrase: gameState.currentPhrase, correct: null });
     displayPhrase(); // NO cambia el modificador (regla nueva)
 }
 
-// ---- Modificador (REGLA NUEVA: fijo por turno) ----
-function pickModifierOnce() {
-    let idx;
-    // Evitar repetir el modificador del turno inmediatamente anterior
-    do {
-        idx = Math.floor(Math.random() * MODIFICADORES.length);
-    } while (MODIFICADORES.length > 1 && idx === gameState.lastModifierIndex);
-    gameState.lastModifierIndex = idx;
-    gameState.currentModifier = MODIFICADORES[idx];
-    displayModifier(); // permanece visible durante TODO el turno
-}
-
+// ---- Modificador (REGLA NUEVA: fijo por turno; lo decide el DADO) ----
 function displayModifier() {
     const m = gameState.currentModifier;
     if (!m) return;
@@ -129,10 +120,12 @@ function startNewTurn() {
     // el Temporizador espera SEGUNDOS -> convertir aqui (fix unidades 2026-08-24).
     gameState.totalTime = (gameState.teamTimes[team] || 300) / 10;
     gameState.timeLeft = gameState.totalTime;
-    gameState.isRunning = true;
+    gameState.isRunning = false;   // aun no corre: esperamos al dado
     gameState.roundStarted = false;
     gameState.roundScores[team] = 0;
     gameState.phraseBag = [];
+    gameState.turnHistory = [];
+    gameState.turnPoints = 0;
     refillBag();
 
     document.getElementById("teamName").textContent = team; // textContent (seguro)
@@ -141,18 +134,71 @@ function startNewTurn() {
     updateScoreboard();
     updateRoundProgress();
 
-    // REGLA NUEVA: modificador elegido UNA vez + primera frase (no cambia)
-    pickModifierOnce();
-    showNextPhrase();
-
     setLiveHits(0);
     setPhraseVisible(true);
-    disableActionButtons(false);
+    disableActionButtons(true);
     updatePauseButton(false);
 
-    // Mostrar modificador 2s antes de empezar la cuenta atras
-    schedulePreTurn();
+    // 🎲 El jugador LANZA el dado para elegir el modificador de este turno
+    showDiceScreen(team);
 
+    persistState();
+}
+
+// ---- Dado de modificador (el jugador lanza; resultado TOTALMENTE aleatorio) ----
+let diceInterval = null;
+
+function showDiceScreen(team) {
+    document.getElementById("diceTeamName").textContent = team;
+    document.getElementById("diceFace").textContent = "🎲";
+    document.getElementById("diceFace").classList.remove("rolling");
+    document.getElementById("rollBtn").style.display = "";
+    document.getElementById("rollBtn").disabled = false;
+    document.getElementById("diceResult").style.display = "none";
+    showScreen("screenDice");
+}
+
+function rollModifier() {
+    const btn = document.getElementById("rollBtn");
+    if (btn.disabled) return;
+    btn.disabled = true;
+    const face = document.getElementById("diceFace");
+    face.classList.add("rolling");
+    const emojis = MODIFICADORES.map(m => m.emoji);
+    let count = 0;
+    const maxSpins = 14 + Math.floor(Math.random() * 4); // ~1.3-1.6s de giro
+    if (diceInterval) clearInterval(diceInterval);
+    diceInterval = setInterval(() => {
+        face.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        count++;
+        if (count >= maxSpins) {
+            clearInterval(diceInterval);
+            diceInterval = null;
+            // Resultado final: TOTALMENTE aleatorio, sin exclusiones
+            const res = MODIFICADORES[Math.floor(Math.random() * MODIFICADORES.length)];
+            gameState.currentModifier = res;
+            face.textContent = res.emoji;
+            face.classList.remove("rolling");
+            document.getElementById("diceResultEmoji").textContent = res.emoji;
+            document.getElementById("diceResultName").textContent = res.name;
+            document.getElementById("diceResultDesc").textContent = res.desc;
+            document.getElementById("diceResult").style.display = "flex";
+            btn.style.display = "none";
+        }
+    }, 90);
+}
+
+function startTurnFromDice() {
+    if (!gameState.currentModifier) return;
+    gameState.isRunning = true;
+    disableActionButtons(false);
+    updatePauseButton(false);
+    showScreen("screenGame");
+    displayModifier();
+    showNextPhrase(); // registra la primera frase en turnHistory
+    setLiveHits(0);
+    setPhraseVisible(true);
+    schedulePreTurn();
     persistState();
 }
 
@@ -162,6 +208,8 @@ function markCorrect() {
     if (!gameState.isRunning || !gameState.roundStarted) return;
     if (Temporizador.getRemainingSeconds() <= 0) return;
     const team = gameState.teams[gameState.currentTeamIndex];
+    const last = gameState.turnHistory[gameState.turnHistory.length - 1];
+    if (last) last.correct = true;
     gameState.roundScores[team] = (gameState.roundScores[team] || 0) + 1;
     setLiveHits(gameState.roundScores[team]);
     vibrate(40);
@@ -171,6 +219,8 @@ function markCorrect() {
 function markPass() {
     if (!gameState.isRunning || !gameState.roundStarted) return;
     if (Temporizador.getRemainingSeconds() <= 0) return;
+    const last = gameState.turnHistory[gameState.turnHistory.length - 1];
+    if (last) last.correct = false;
     vibrate(20);
     showNextPhrase();
 }
@@ -219,13 +269,43 @@ function endTurn() {
     disableActionButtons(true);
     updatePauseButton(false);
 
+    // La frase que quedaba en pantalla sin responder cuenta como fallada
+    const last = gameState.turnHistory[gameState.turnHistory.length - 1];
+    if (last && last.correct === null) last.correct = false;
+
     const team = gameState.teams[gameState.currentTeamIndex];
-    const points = gameState.roundScores[team] || 0;
+    const points = gameState.turnHistory.filter(t => t.correct === true).length;
+    gameState.turnPoints = points;
+    gameState.roundScores[team] = points;
     gameState.totalScores[team] = (gameState.totalScores[team] || 0) + points;
+
+    renderTurnSummary();
+    persistState();
+    showScreen("screenTurnSummary");
+}
+
+// ---- Correccion desde el resumen del turno ----
+function toggleTurnResult(index) {
+    const item = gameState.turnHistory[index];
+    if (!item) return;
+    const team = gameState.teams[gameState.currentTeamIndex];
+    const wasCorrect = item.correct === true;
+    item.correct = !wasCorrect;
+    const points = gameState.turnHistory.filter(t => t.correct === true).length;
+    gameState.turnPoints = points;
+    gameState.roundScores[team] = points;
+    gameState.totalScores[team] = (gameState.totalScores[team] || 0) + (wasCorrect ? -1 : 1);
+    renderTurnSummary();
+}
+
+// ---- Continuar desde el resumen -> fin de ronda ----
+function continueFromSummary() {
+    const team = gameState.teams[gameState.currentTeamIndex];
+    const points = gameState.turnPoints || 0;
 
     document.getElementById("roundEndTeam").textContent = team; // textContent
     document.getElementById("roundEndPoints").textContent = points;
-    document.getElementById("roundEndTotal").textContent = gameState.totalScores[team];
+    document.getElementById("roundEndTotal").textContent = gameState.totalScores[team] || 0;
     updateRoundEndRanking();
 
     // Mostrar opcion de cambiar tiempo si hay siguiente equipo
@@ -337,7 +417,9 @@ function resetGame() {
         guiner: {},
         roundStartedAt: 0,
         totalTime: 0,
-        timeLeft: 0
+        timeLeft: 0,
+        turnHistory: [],
+        turnPoints: 0
     };
     setupTimes = {};
 }
@@ -456,6 +538,8 @@ if (typeof module !== "undefined") {
         startNewTurn, showNextPhrase, markCorrect, markPass, pauseGame,
         endTurn, nextRound, assignGuiners, finishGame, resetGame,
         goToHome, goToSetup, updateTeamCount, selectTeamTime, startGame,
-        toggleInstructions, changeNextTeamTime, schedulePreTurn, refillBag
+        toggleInstructions, changeNextTeamTime, schedulePreTurn, refillBag,
+        rollModifier, startTurnFromDice, toggleTurnResult, continueFromSummary,
+        showDiceScreen
     };
 }

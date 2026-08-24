@@ -27,7 +27,8 @@
                     <p>✅ El jugador DESCRIBE la frase original con el modificador. Los otros ADIVINAN.</p>
                     <p>✔ Acierto = 1 punto. Pasar = sin puntos.</p>
                     <p>🏆 Gana quien más puntos acumule en 10 rondas.</p>
-                    <p>⏱ El modificador se elige UNA vez al inicio del turno del equipo y se mantiene fijo durante TODO el turno (v2).</p>
+                    <p>🎲 Al inicio de cada turno, lanza el dado: el modificador que salga es el de TODO tu turno.</p>
+                    <p>📋 Al terminar el turno verás un resumen y podrás corregir aciertos/fallos.</p>
                     <p>🏅 Al acabar cada ronda, el equipo con más aciertos recibe una tarjeta güiner (en empate, nadie la recibe).</p>
                     <p>⏱ Cada equipo puede cambiar su tiempo antes de cada ronda.</p>
                 </div>
@@ -49,6 +50,25 @@
                 </div>
                 <div id="teamsContainer" class="teams-inputs"></div>
                 <button class="btn btn-primary" onclick="startGame()" id="startBtn">Empezar Partida</button>
+            </div>
+        </div>
+
+        <!-- PANTALLA 2.5: LANZAR DADO (modificador del turno) -->
+        <div id="screenDice" class="screen">
+            <div class="dice-container">
+                <div class="dice-team" id="diceTeamName">Equipo 1</div>
+                <div class="dice-title">🎲 ¡Lanza el dado!</div>
+                <div class="dice-subtitle">El resultado define el modificador de TODO tu turno</div>
+                <div class="dice-face" id="diceFace">🎲</div>
+                <button class="btn btn-primary" id="rollBtn" onclick="rollModifier()">Lanzar dado</button>
+                <div class="dice-result" id="diceResult" style="display: none;">
+                    <div class="modifier-display">
+                        <span class="modifier-emoji" id="diceResultEmoji">🍆</span>
+                        <div class="modifier-name" id="diceResultName">Berenjena</div>
+                        <div class="modifier-description" id="diceResultDesc"></div>
+                    </div>
+                    <button class="btn btn-success" onclick="startTurnFromDice()">▶ ¡A jugar!</button>
+                </div>
             </div>
         </div>
 
@@ -100,6 +120,18 @@
             <div class="scoreboard">
                 <div class="scoreboard-title">Marcador</div>
                 <div class="scoreboard-teams" id="scoreboardTeams"></div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 3.5: RESUMEN DEL TURNO (corrección de aciertos/fallos) -->
+        <div id="screenTurnSummary" class="screen">
+            <div class="turn-summary-container">
+                <div class="turn-summary-title">Resumen del turno</div>
+                <div class="turn-summary-team">Equipo: <span id="turnSummaryTeam">Equipo 1</span></div>
+                <div class="turn-summary-points">Puntos: <span id="turnSummaryPoints">0</span></div>
+                <div class="turn-summary-list" id="turnSummaryList"></div>
+                <div class="turn-summary-hint">¿Algún fallo al pulsar? Toca 🔄 para corregir una frase.</div>
+                <button class="btn btn-primary" onclick="continueFromSummary()">Continuar ▶</button>
             </div>
         </div>
 

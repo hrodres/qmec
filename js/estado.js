@@ -47,6 +47,8 @@ let gameState = {
     roundStartedAt: 0,    // timestamp de inicio del temporizador (Date.now)
     totalTime: 0,         // segundos del turno actual
     timeLeft: 0,          // segundos restantes (decimal interno)
+    turnHistory: [],      // frases del turno actual: [{ phrase, correct|null }]
+    turnPoints: 0,        // puntos del turno actual (recalculables en el resumen)
 };
 
 // ---- Persistencia ligera (nombres de equipo, tiempos, records) ----
