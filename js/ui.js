@@ -47,7 +47,8 @@ function setupRoundProgress() {
     const container = document.getElementById("roundProgress");
     if (!container) return;
     container.innerHTML = "";
-    for (let i = 0; i < TOTAL_ROUNDS; i++) {
+    const rounds = gameState.totalRounds || TOTAL_ROUNDS;
+    for (let i = 0; i < rounds; i++) {
         const dot = document.createElement("div");
         dot.className = "round-dot";
         dot.id = `dot-${i}`;
@@ -127,7 +128,9 @@ function renderPodio(ranking) {
     });
 }
 
-// ---- Resumen del turno (frases acertadas/falladas + correccion) ----
+// ---- Resumen del turno (frases acertadas/falladas/descartadas + correccion) ----
+// Al finalizar el turno las tarjetas se reordenan ALEATORIAMENTE (feature);
+// cada fila conserva el indice real en turnHistory para el boton 🔄.
 function renderTurnSummary() {
     const list = document.getElementById("turnSummaryList");
     if (!list) return;
@@ -136,13 +139,23 @@ function renderTurnSummary() {
     document.getElementById("turnSummaryPoints").textContent = gameState.turnPoints || 0;
 
     list.innerHTML = "";
-    gameState.turnHistory.forEach((item, idx) => {
-        const isCorrect = item.correct === true;
-        const isPending = item.correct === null;
+    // Orden aleatorio: barajar (Fisher-Yates) la lista de indices reales
+    const indices = gameState.turnHistory.map((_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = indices[i];
+        indices[i] = indices[j];
+        indices[j] = tmp;
+    }
+    indices.forEach(idx => {
+        const item = gameState.turnHistory[idx];
+        const isDiscarded = item.discarded === true;
+        const isCorrect = !isDiscarded && item.correct === true;
+        const isPending = !isDiscarded && item.correct === null;
         const row = document.createElement("div");
-        row.className = "turn-summary-item " + (isCorrect ? "ok" : "miss");
+        row.className = "turn-summary-item " + (isDiscarded ? "discard" : (isCorrect ? "ok" : "miss"));
         row.innerHTML = `
-            <span class="turn-summary-icon">${isCorrect ? "✔" : (isPending ? "·" : "✖")}</span>
+            <span class="turn-summary-icon">${isDiscarded ? "🗑" : (isCorrect ? "✔" : (isPending ? "·" : "✖"))}</span>
             <span class="turn-summary-phrase">${esc(item.phrase)}</span>
             <button type="button" class="turn-summary-toggle" onclick="toggleTurnResult(${idx})" aria-label="Corregir">🔄</button>
         `;

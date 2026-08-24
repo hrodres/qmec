@@ -29,8 +29,10 @@ let setupTimes = {};
 function disableActionButtons(disabled) {
     const c = document.getElementById("btnCorrect");
     const p = document.getElementById("btnPass");
+    const d = document.getElementById("btnDiscard");
     if (c) c.disabled = disabled;
     if (p) p.disabled = disabled;
+    if (d) d.disabled = disabled;
 }
 
 function updatePauseButton(paused) {
@@ -57,7 +59,7 @@ function showNextPhrase() {
     }
     gameState.currentPhrase = gameState.phraseBag.pop();
     // Registro para el resumen del turno (pendiente: null -> se resuelve al pulsar)
-    gameState.turnHistory.push({ phrase: gameState.currentPhrase, correct: null });
+    gameState.turnHistory.push({ phrase: gameState.currentPhrase, correct: null, discarded: false });
     displayPhrase(); // NO cambia el modificador (regla nueva)
 }
 
@@ -225,6 +227,16 @@ function markPass() {
     showNextPhrase();
 }
 
+// ---- Descartar tarjeta (la quitas sin puntuar; aparece como 🗑 en el resumen) ----
+function markDiscard() {
+    if (!gameState.isRunning || !gameState.roundStarted) return;
+    if (Temporizador.getRemainingSeconds() <= 0) return;
+    const last = gameState.turnHistory[gameState.turnHistory.length - 1];
+    if (last) last.discarded = true;
+    vibrate(15);
+    showNextPhrase();
+}
+
 // ---- Pausa / reanudar (A3, B5) ----
 function pauseGame() {
     if (gameState.isRunning) {
@@ -270,8 +282,9 @@ function endTurn() {
     updatePauseButton(false);
 
     // La frase que quedaba en pantalla sin responder cuenta como fallada
+    // (salvo si se descarto: las 🗑 no puntuan ni cuentan como fallo)
     const last = gameState.turnHistory[gameState.turnHistory.length - 1];
-    if (last && last.correct === null) last.correct = false;
+    if (last && last.correct === null && !last.discarded) last.correct = false;
 
     const team = gameState.teams[gameState.currentTeamIndex];
     const points = gameState.turnHistory.filter(t => t.correct === true).length;
@@ -290,7 +303,13 @@ function toggleTurnResult(index) {
     if (!item) return;
     const team = gameState.teams[gameState.currentTeamIndex];
     const wasCorrect = item.correct === true;
-    item.correct = !wasCorrect;
+    if (item.discarded) {
+        // La descartaste por error: se convierte en acierto
+        item.discarded = false;
+        item.correct = true;
+    } else {
+        item.correct = !wasCorrect;
+    }
     const points = gameState.turnHistory.filter(t => t.correct === true).length;
     gameState.turnPoints = points;
     gameState.roundScores[team] = points;
@@ -310,7 +329,7 @@ function continueFromSummary() {
 
     // Mostrar opcion de cambiar tiempo si hay siguiente equipo
     const nextTeamIndex = gameState.currentTeamIndex + 1;
-    if (nextTeamIndex < gameState.teams.length && gameState.currentRound < TOTAL_ROUNDS) {
+    if (nextTeamIndex < gameState.teams.length && gameState.currentRound < gameState.totalRounds) {
         const nextTeam = gameState.teams[nextTeamIndex];
         document.getElementById("nextTeamInfo").textContent = `Próximo: ${nextTeam}`;
         document.getElementById("timeChangeSection").style.display = "block";
@@ -353,7 +372,7 @@ function nextRound() {
         // Se acabo el turno del ultimo equipo de la ronda -> asignar güiner
         // de ESTA ronda (A2: tambien para la ronda 10).
         assignGuiners();
-        if (gameState.currentRound < TOTAL_ROUNDS) {
+        if (gameState.currentRound < gameState.totalRounds) {
             gameState.currentRound++;
             gameState.currentTeamIndex = 0;
             showScreen("screenGame");
@@ -419,7 +438,8 @@ function resetGame() {
         totalTime: 0,
         timeLeft: 0,
         turnHistory: [],
-        turnPoints: 0
+        turnPoints: 0,
+        totalRounds: TOTAL_ROUNDS
     };
     setupTimes = {};
 }
@@ -486,6 +506,12 @@ function updateTeamCount() {
     }
 }
 
+function updateRoundsCount() {
+    const el = document.getElementById("numRounds");
+    if (!el) return;
+    document.getElementById("roundsCount").textContent = el.value;
+}
+
 function selectTeamTime(teamIndex, seconds) {
     setupTimes[teamIndex] = seconds;
     document.querySelectorAll(`[data-team="${teamIndex}"]`).forEach(btn => {
@@ -505,6 +531,12 @@ function startGame() {
 
     // IDs estables: si hay nombres repetidos, anadir sufijo (2), (3)...
     const teams = makeTeamIds(rawNames);
+
+    // Rondas configurables (feature: se eligen al inicio del juego)
+    const rounds = parseInt(document.getElementById("numRounds").value, 10);
+    gameState.totalRounds = rounds >= 2 && rounds <= 20 ? rounds : TOTAL_ROUNDS;
+    const totalLbl = document.getElementById("totalRounds");
+    if (totalLbl) totalLbl.textContent = gameState.totalRounds;
 
     gameState.teams = teams;
     gameState.currentRound = 1;
@@ -535,11 +567,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 if (typeof module !== "undefined") {
     module.exports = {
-        startNewTurn, showNextPhrase, markCorrect, markPass, pauseGame,
+        startNewTurn, showNextPhrase, markCorrect, markPass, markDiscard, pauseGame,
         endTurn, nextRound, assignGuiners, finishGame, resetGame,
         goToHome, goToSetup, updateTeamCount, selectTeamTime, startGame,
         toggleInstructions, changeNextTeamTime, schedulePreTurn, refillBag,
         rollModifier, startTurnFromDice, toggleTurnResult, continueFromSummary,
-        showDiceScreen
+        showDiceScreen, updateRoundsCount
     };
 }

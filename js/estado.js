@@ -5,7 +5,7 @@
 // para el marcador usamos SIEMPRE un identificador unico (teamId) para evitar
 // colisiones cuando dos equipos se llaman igual.
 
-const TOTAL_ROUNDS = 10;
+const TOTAL_ROUNDS = 10; // valor por defecto; el usuario elige en el setup
 const LS_KEY = "qmec_state_v2";
 
 // Identificador estable para un equipo. Si hay nombres repetidos, anadimos
@@ -33,6 +33,7 @@ let gameState = {
     teams: [],            // lista de displayNames unicos
     teamTimes: {},        // { displayName: segundos }
     currentRound: 1,
+    totalRounds: TOTAL_ROUNDS, // rondas elegidas en el setup (default 10)
     currentTeamIndex: 0,
     isRunning: false,
     roundStarted: false,
@@ -62,6 +63,7 @@ function persistState() {
             teams: gameState.teams,
             teamTimes: gameState.teamTimes,
             currentRound: gameState.currentRound,
+            totalRounds: gameState.totalRounds,
             currentTeamIndex: gameState.currentTeamIndex,
             roundScores: gameState.roundScores,
             totalScores: gameState.totalScores,
@@ -81,6 +83,7 @@ function loadPersistedState() {
         gameState.teams = snap.teams;
         gameState.teamTimes = snap.teamTimes || {};
         gameState.currentRound = snap.currentRound || 1;
+        gameState.totalRounds = snap.totalRounds || TOTAL_ROUNDS;
         gameState.currentTeamIndex = snap.currentTeamIndex || 0;
         gameState.roundScores = snap.roundScores || {};
         gameState.totalScores = snap.totalScores || {};

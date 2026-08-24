@@ -25,8 +25,8 @@
                     <p>📌 Cada equipo tiene su tiempo configurado para adivinar frases.</p>
                     <p>🎲 Hay 6 modificadores: Berenjena, Del Revés, Oski, Vocales, Lengua Fuera e Interpreta.</p>
                     <p>✅ El jugador DESCRIBE la frase original con el modificador. Los otros ADIVINAN.</p>
-                    <p>✔ Acierto = 1 punto. Pasar = sin puntos.</p>
-                    <p>🏆 Gana quien más puntos acumule en 10 rondas.</p>
+                    <p>✔ Acierto = 1 punto. Pasar = sin puntos. 🗑 Descartar = quitar la tarjeta sin puntos.</p>
+                    <p>🏆 Gana quien más puntos acumule en las rondas elegidas (2-20).</p>
                     <p>🎲 Al inicio de cada turno, lanza el dado: el modificador que salga es el de TODO tu turno.</p>
                     <p>📋 Al terminar el turno verás un resumen y podrás corregir aciertos/fallos.</p>
                     <p>🏅 Al acabar cada ronda, el equipo con más aciertos recibe una tarjeta güiner (en empate, nadie la recibe).</p>
@@ -49,6 +49,12 @@
                            oninput="updateTeamCount()" onchange="updateTeamCount()">
                 </div>
                 <div id="teamsContainer" class="teams-inputs"></div>
+                <div class="slider-group">
+                    <label for="numRounds">¿Cuántas rondas?</label>
+                    <div class="slider-display" id="roundsCount">10</div>
+                    <input type="range" id="numRounds" min="2" max="20" value="10"
+                           oninput="updateRoundsCount()" onchange="updateRoundsCount()">
+                </div>
                 <button class="btn btn-primary" onclick="startGame()" id="startBtn">Empezar Partida</button>
             </div>
         </div>
@@ -76,7 +82,7 @@
         <div id="screenGame" class="screen">
             <div class="game-header">
                 <div>
-                    <div class="round-info">RONDA <span id="currentRound">1</span>/10</div>
+                    <div class="round-info">RONDA <span id="currentRound">1</span>/<span id="totalRounds">10</span></div>
                     <div class="round-progress" id="roundProgress"></div>
                 </div>
                 <button class="pause-btn" id="pauseBtn" aria-label="Pausar" onclick="pauseGame()">⏸</button>
@@ -115,6 +121,7 @@
                     <button class="btn btn-success btn-action" id="btnCorrect" onclick="markCorrect()">✔ Acierto</button>
                     <button class="btn btn-error btn-action" id="btnPass" onclick="markPass()">✖ Pasar</button>
                 </div>
+                <button class="btn btn-discard" id="btnDiscard" onclick="markDiscard()">🗑 Descartar</button>
             </div>
 
             <div class="scoreboard">

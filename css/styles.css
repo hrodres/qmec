@@ -588,6 +588,28 @@ input[type="text"]::placeholder { color: var(--text-secondary); }
     font-size: 1.1rem;
 }
 
+/* Boton Descartar tarjeta: mas pequeno que Acierto/Pasar (feature) */
+.btn-discard {
+    align-self: center;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.85rem;
+    min-height: auto;
+    flex: 0 0 auto;
+    width: auto;
+    background: rgba(148, 163, 184, 0.12);
+    border: 2px dashed var(--border);
+    color: var(--text-secondary);
+}
+.btn-discard:hover:not(:disabled) {
+    border-color: var(--accent-purple);
+    color: var(--accent-purple-light);
+    background: rgba(124, 58, 237, 0.12);
+}
+.btn-discard:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 .scoreboard {
     background: rgba(26, 41, 60, 0.8);
     border-top: 2px solid var(--accent-purple);
@@ -936,6 +958,10 @@ input[type="text"]::placeholder { color: var(--text-secondary); }
     border-color: var(--error);
     background: rgba(239, 68, 68, 0.08);
 }
+.turn-summary-item.discard {
+    border-color: var(--text-secondary);
+    background: rgba(148, 163, 184, 0.10);
+}
 .turn-summary-icon {
     font-size: 1.1rem;
     min-width: 1.5rem;
@@ -943,6 +969,7 @@ input[type="text"]::placeholder { color: var(--text-secondary); }
 }
 .turn-summary-item.ok .turn-summary-icon { color: var(--success); }
 .turn-summary-item.miss .turn-summary-icon { color: var(--error); }
+.turn-summary-item.discard .turn-summary-icon { color: var(--text-secondary); }
 .turn-summary-phrase {
     flex: 1;
     font-size: 0.95rem;
