@@ -18,9 +18,10 @@ function updateScoreboard() {
         const isActive = team === activeTeam;
         const pts = gameState.totalScores[team] || 0;
         const guin = gameState.guiner[team] || 0;
+        const label = teamLabel(team); // "Equipo N · Nombre"
         return `
             <div class="scoreboard-team ${isActive ? "active" : ""}">
-                <div class="scoreboard-name" title="${esc(team)}">${esc(team)}</div>
+                <div class="scoreboard-name" title="${esc(team)}">${esc(label)}</div>
                 <div class="scoreboard-points">${pts}</div>
                 <div class="scoreboard-guiner">🏆 ${guin}</div>
             </div>
@@ -102,7 +103,7 @@ function updateRoundEndRanking() {
     container.innerHTML = ranking.map(item => `
         <div class="ranking-item">
             <span class="ranking-position">#${item.pos}</span>
-            <span class="ranking-name">${esc(item.name)}</span>
+            <span class="ranking-name">${esc(teamLabel(item.name))}</span>
             <span class="ranking-points">${item.points}pts</span>
         </div>
     `).join("");
@@ -121,7 +122,7 @@ function renderPodio(ranking) {
         div.className = "podium-place";
         div.innerHTML = `
             <div class="podium-medal">${medals[idx]}</div>
-            <div class="podium-name">${esc(name)}</div>
+            <div class="podium-name">${esc(teamLabel(name))}</div>
             <div class="podium-bar ${podiumClasses[idx]}">${score}</div>
         `;
         podiumContainer.appendChild(div);
@@ -135,7 +136,7 @@ function renderTurnSummary() {
     const list = document.getElementById("turnSummaryList");
     if (!list) return;
     const team = gameState.teams[gameState.currentTeamIndex];
-    document.getElementById("turnSummaryTeam").textContent = team; // textContent (seguro)
+    document.getElementById("turnSummaryTeam").textContent = teamLabel(team); // "Equipo N · Nombre"
     document.getElementById("turnSummaryPoints").textContent = gameState.turnPoints || 0;
 
     list.innerHTML = "";

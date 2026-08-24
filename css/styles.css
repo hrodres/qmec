@@ -371,6 +371,11 @@ input[type="text"]::placeholder { color: var(--text-secondary); }
     border-color: var(--accent-purple-light);
 }
 
+.setup-hint {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
 /* ===== PANTALLA JUEGO ===== */
 #screenGame { justify-content: space-between; }
 

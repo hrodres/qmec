@@ -32,6 +32,8 @@ function makeTeamIds(names) {
 let gameState = {
     teams: [],            // lista de displayNames unicos
     teamTimes: {},        // { displayName: segundos }
+    teamDiscards: {},     // { displayName: limite de descartes/turno (0..5 | Infinity) }
+    teamNumbers: {},      // { displayName: numero original del equipo en el setup (1..N) }
     currentRound: 1,
     totalRounds: TOTAL_ROUNDS, // rondas elegidas en el setup (default 10)
     currentTeamIndex: 0,
@@ -62,6 +64,8 @@ function persistState() {
         const snap = {
             teams: gameState.teams,
             teamTimes: gameState.teamTimes,
+            teamDiscards: gameState.teamDiscards,
+            teamNumbers: gameState.teamNumbers,
             currentRound: gameState.currentRound,
             totalRounds: gameState.totalRounds,
             currentTeamIndex: gameState.currentTeamIndex,
@@ -82,6 +86,8 @@ function loadPersistedState() {
         if (!snap || !Array.isArray(snap.teams) || snap.teams.length === 0) return false;
         gameState.teams = snap.teams;
         gameState.teamTimes = snap.teamTimes || {};
+        gameState.teamDiscards = snap.teamDiscards || {};
+        gameState.teamNumbers = snap.teamNumbers || {};
         gameState.currentRound = snap.currentRound || 1;
         gameState.totalRounds = snap.totalRounds || TOTAL_ROUNDS;
         gameState.currentTeamIndex = snap.currentTeamIndex || 0;
@@ -98,6 +104,18 @@ function clearPersistedState() {
     try { localStorage.removeItem(LS_KEY); } catch (e) {}
 }
 
+// ---- Etiqueta visible de un equipo: "Equipo N · Nombre" ----------------
+// Si el jugador no puso nombre (displayName por defecto "Equipo N"), se
+// muestra solo "Equipo N". Si hay nombre personalizado: "Equipo N · Nombre".
+function teamLabel(team) {
+    if (!team) return "";
+    const n = gameState.teamNumbers && gameState.teamNumbers[team]
+        ? gameState.teamNumbers[team]
+        : (gameState.teams.indexOf(team) + 1 || 1);
+    if (team === `Equipo ${n}`) return team; // nombre por defecto
+    return `Equipo ${n} · ${team}`;
+}
+
 // ---- Utilidad: escapar HTML para insertar nombres de equipo (A4) ----
 function esc(str) {
     return String(str)
@@ -111,7 +129,7 @@ function esc(str) {
 
 if (typeof module !== "undefined") {
     module.exports = {
-        TOTAL_ROUNDS, LS_KEY, makeTeamIds,
+        TOTAL_ROUNDS, LS_KEY, makeTeamIds, teamLabel,
         getGameState: () => gameState,
         setGameState: (s) => { gameState = s; },
         persistState, loadPersistedState, clearPersistedState, esc

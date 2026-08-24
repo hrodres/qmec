@@ -26,8 +26,9 @@
                     <p>🃏 Las tarjetas se barajan al inicio de la partida; al agotarse todas, se vuelven a mezclar y se sigue jugando.</p>
                     <p>🎲 Hay 6 modificadores: Berenjena, Del Revés, Oski, Vocales, Lengua Fuera e Interpreta.</p>
                     <p>✅ El jugador DESCRIBE la frase original con el modificador. Los otros ADIVINAN.</p>
-                    <p>✔ Acierto = 1 punto. Pasar = sin puntos. 🗑 Descartar = quitar la tarjeta sin puntos.</p>
+                    <p>✔ Acierto = 1 punto. Pasar = sin puntos. 🗑 Descartar = quitar la tarjeta sin puntos (con el límite por equipo que elijáis).</p>
                     <p>🏆 Gana quien más puntos acumule en las rondas elegidas (2-20).</p>
+                    <p>📋 Puedes elegir el orden de juego de los equipos (manual o aleatorio) al configurar la partida.</p>
                     <p>🎲 Al inicio de cada turno, lanza el dado: el modificador que salga es el de TODO tu turno.</p>
                     <p>📋 Al terminar el turno verás un resumen y podrás corregir aciertos/fallos.</p>
                     <p>🏅 Al acabar cada ronda, el equipo con más aciertos recibe una tarjeta güiner (en empate, nadie la recibe).</p>
@@ -56,6 +57,14 @@
                     <input type="range" id="numRounds" min="2" max="20" value="10"
                            oninput="updateRoundsCount()" onchange="updateRoundsCount()">
                 </div>
+                <div class="slider-group">
+                    <label>¿Orden de los equipos?</label>
+                    <div class="time-options-setup">
+                        <button type="button" class="time-btn active" data-order="manual" onclick="selectOrderMode('manual')">📋 Manual</button>
+                        <button type="button" class="time-btn" data-order="random" onclick="selectOrderMode('random')">🎲 Aleatorio</button>
+                    </div>
+                    <p class="setup-hint">Manual: juegan en el orden que los escribes. Aleatorio: se barajan al empezar.</p>
+                </div>
                 <button class="btn btn-primary" onclick="startGame()" id="startBtn">Empezar Partida</button>
             </div>
         </div>
@@ -65,7 +74,6 @@
             <div class="dice-container">
                 <div class="dice-team" id="diceTeamName">Equipo 1</div>
                 <div class="dice-title">🎲 ¡Lanza el dado!</div>
-                <div class="dice-subtitle">El resultado define el modificador de TODO tu turno</div>
                 <div class="dice-face" id="diceFace">🎲</div>
                 <button class="btn btn-primary" id="rollBtn" onclick="rollModifier()">Lanzar dado</button>
                 <div class="dice-result" id="diceResult" style="display: none;">
