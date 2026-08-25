@@ -21,6 +21,10 @@
 // la cuenta atras. Debe poder cancelarse en pausa/reset (A3, B5).
 let preTurnTimeout = null;
 let pausedBeforeStart = false;
+// Fase 3A anti doble-tap: mientras es true, Acierto/Pasar no hacen nada.
+// Se activa al pulsar (deshabilitando los botones al momento) y se libera
+// cuando showNextPhrase muestra la nueva frase (o al resumir/pausar).
+let antiDoubleTap = false;
 
 // Tiempo seleccionado en el setup por equipo (indice 1..N)
 let setupTimes = {};
@@ -61,6 +65,10 @@ function showNextPhrase() {
     // Registro para el resumen del turno (pendiente: null -> se resuelve al pulsar)
     gameState.turnHistory.push({ phrase: gameState.currentPhrase, correct: null });
     displayPhrase(); // NO cambia el modificador (regla nueva)
+    // Fase 3A: la nueva frase ya está en pantalla -> reactivar Acierto/Pasar
+    // (si el turno sigue en marcha; si no, siguen deshabilitados).
+    disableActionButtons(!(gameState.isRunning && gameState.roundStarted));
+    antiDoubleTap = false;
 }
 
 // ---- Modificador (REGLA NUEVA: fijo por turno; lo decide el DADO) ----
@@ -98,8 +106,8 @@ function applyModifierIcon(el, m) {
     el.classList.toggle("vowel-icon", isVowels);
 }
 
-// Descripcion dinamica: en AEIOU se muestra la vocal elegida para el turno
-// (a/e/i/o/u aleatoria), no siempre la "a" (mejora 2026-08-25).
+// Descripcion dinamica: en AEIOU se muestra la vocal del turno en curso
+// (arranca en A y sube con cada acierto: a→e→i→o→u→a…).
 function modifierDescription(m) {
     if (!m) return "";
     if (m.type === "vowels") {
@@ -119,6 +127,32 @@ function displayPhrase() {
         catEl.style.display = phrase.categoria ? "" : "none";
     }
     document.getElementById("phraseText").textContent = applyModifierToPhrase(phrase);
+}
+
+// ---- Aplicación del modificador al TEXTO mostrado ----
+// Solo AEIOU transforma el texto; el resto de modificadores son reglas de
+// DESCRIPCIÓN (la frase original se muestra tal cual).
+function applyModifierToPhrase(phrase) {
+    if (!phrase || !phrase.texto) return "";
+    if (gameState.currentModifier && gameState.currentModifier.type === "vowels") {
+        const vowel = (gameState.aeiouVowel || "a")[0] || "a";
+        return applyAEIOU(phrase.texto, vowel);
+    }
+    return phrase.texto;
+}
+
+// ---- AEIOU: sustituye TODAS las vocales (con y sin tilde, may/min) -------
+// Conserva mayúsculas (A→A, a→a) y normaliza las tildes: la vocal de
+// sustitución va SIN tilde (regla cerrada de Héctor: cambia por la vocal
+// actual, no por una acentuada).
+const AEIOU_VOWELS = ["a", "e", "i", "o", "u"];
+const AEIOU_RE = /[aáàäâAÁÀÄÂeéèëêEÉÈËÊiíìïîIÍÌÏÎoóòöôOÓÒÖÔuúùüûUÚÙÜÛ]/g;
+function applyAEIOU(text, vowel) {
+    const v = (vowel || "a").toLowerCase()[0] || "a";
+    return String(text).replace(AEIOU_RE, (ch) => {
+        // Si la vocal original era MAYÚSCULA, la sustitución va en mayúscula
+        return (ch === ch.toUpperCase()) ? v.toUpperCase() : v;
+    });
 }
 
 // ---- Temporizador display ----
@@ -148,7 +182,6 @@ function schedulePreTurn() {
         preTurnTimeout = null;
         if (!gameState.isRunning) return; // pausado/reset durante la intro
         gameState.roundStarted = true;
-        setPhraseVisible(true);
         Temporizador.start(gameState.totalTime, {
             onTick: (remSec, totalSec) => updateTimerDisplay(remSec, totalSec),
             onEnd: () => endTurn()
@@ -182,7 +215,6 @@ function startNewTurn() {
     updateRoundProgress();
 
     setLiveHits(0);
-    setPhraseVisible(true);
     disableActionButtons(true);
     updatePauseButton(false);
 
@@ -230,10 +262,11 @@ function rollModifier() {
             // Resultado final: TOTALMENTE aleatorio, sin exclusiones
             const res = MODIFICADORES[Math.floor(Math.random() * MODIFICADORES.length)];
             gameState.currentModifier = res;
-            // AEIOU: eligir UNA vocal aleatoria (a/e/i/o/u) para el turno
-            // (mejora 2026-08-25: antes "jugaba" siempre con la a).
+            // Fase 2A: AEIOU arranca SIEMPRE en la vocal 'a' (decisión de
+            // Héctor, 2026-08-25: nada de vocal aleatoria). Después de cada
+            // acierto sube a la siguiente vocal (a→e→i→o→u→a…).
             if (res.type === "vowels") {
-                gameState.aeiouVowel = ["a", "e", "i", "o", "u"][Math.floor(Math.random() * 5)];
+                gameState.aeiouVowel = "a";
             }
             face.textContent = res.emoji;
             face.classList.remove("rolling");
@@ -256,7 +289,6 @@ function startTurnFromDice() {
     displayModifier();
     showNextPhrase(); // registra la primera frase en turnHistory
     setLiveHits(0);
-    setPhraseVisible(true);
     schedulePreTurn();
     gameState.resumeAdvance = false; // turno en curso -> reanudar lo rehace desde el dado
     persistState();
@@ -264,6 +296,11 @@ function startTurnFromDice() {
 
 // ---- Marcar acierto / pasar (A3, B2, B4) ----
 function markCorrect() {
+    // Guard (Fase 3A anti doble-tap): bloqueo INMEDIATO del doble-tap ANTES
+    // de evaluar el resto. Si ya estamos procesando un tap, salimos.
+    if (antiDoubleTap) return;
+    antiDoubleTap = true;
+    disableActionButtons(true);
     // Guard: solo si corre el turno y queda tiempo
     if (!gameState.isRunning || !gameState.roundStarted) return;
     if (Temporizador.getRemainingSeconds() <= 0) return;
@@ -273,10 +310,23 @@ function markCorrect() {
     gameState.roundScores[team] = (gameState.roundScores[team] || 0) + 1;
     setLiveHits(gameState.roundScores[team]);
     vibrate(40);
-    showNextPhrase();
+    // Fase 2A: en AEIOU, cada acierto AVANZA la vocal (a→e→i→o→u→a…)
+    if (gameState.currentModifier && gameState.currentModifier.type === "vowels") {
+        const idx = AEIOU_VOWELS.indexOf(gameState.aeiouVowel);
+        gameState.aeiouVowel = AEIOU_VOWELS[(idx + 1) % AEIOU_VOWELS.length];
+        const disp = document.getElementById("modifierDisplay");
+        applyModifierIcon(document.getElementById("modifierEmoji"), gameState.currentModifier);
+        document.getElementById("modifierDesc").textContent = modifierDescription(gameState.currentModifier);
+        if (disp) disp.style.display = "flex";
+    }
+    showNextPhrase(); // la siguiente frase ya se sustituye con la vocal ACTUAL
 }
 
 function markPass() {
+    // Guard (Fase 3A anti doble-tap)
+    if (antiDoubleTap) return;
+    antiDoubleTap = true;
+    disableActionButtons(true);
     if (!gameState.isRunning || !gameState.roundStarted) return;
     if (Temporizador.getRemainingSeconds() <= 0) return;
     const last = gameState.turnHistory[gameState.turnHistory.length - 1];
@@ -306,9 +356,10 @@ function pauseGame() {
             pausedBeforeStart = false;
         }
         gameState.isRunning = true;
-        disableActionButtons(false);
+        disableActionButtons(gameState.roundStarted === false);
         updatePauseButton(false);
         if (gameState.roundStarted) {
+            antiDoubleTap = false;
             Temporizador.resume();
         } else {
             pausedBeforeStart = false;
@@ -359,6 +410,8 @@ function toggleTurnResult(index) {
     gameState.turnPoints = points;
     gameState.roundScores[team] = points;
     gameState.totalScores[team] = (gameState.totalScores[team] || 0) + (wasCorrect ? -1 : 1);
+    // Fase 3D: la corrección también sobrevive a una recarga (persistState)
+    persistState();
     renderTurnSummary();
 }
 
@@ -523,16 +576,13 @@ function resetGame() {
         currentTeamIndex: 0,
         isRunning: false,
         roundStarted: false,
-        usedPhrases: [],
         phraseBag: [],
         currentPhrase: "",
         currentModifier: null,
         aeiouVowel: null,
-        lastModifierIndex: -1,
         roundScores: {},
         totalScores: {},
         guiner: {},
-        roundStartedAt: 0,
         totalTime: 0,
         timeLeft: 0,
         turnHistory: [],
@@ -611,7 +661,6 @@ function resumeGame() {
     updateScoreboard();
     updateRoundProgress();
     setLiveHits(0);
-    setPhraseVisible(true);
     disableActionButtons(true);
     updatePauseButton(false);
     showDiceScreen(team);
@@ -720,7 +769,7 @@ function startGame() {
     gameState.roundScores = {};
     gameState.totalScores = {};
     gameState.guiner = {};
-    gameState.lastModifierIndex = -1;
+    gameState.aeiouVowel = null;
 
     teams.forEach((team, idx) => {
         gameState.totalScores[team] = 0;
