@@ -43,6 +43,7 @@ let gameState = {
     phraseBag: [],        // mazo barajado (shuffle bag) de frases del turno
     currentPhrase: "",
     currentModifier: null,
+    aeiouVowel: null,       // vocal elegida para el modificador AEIOU (a/e/i/o/u)
     lastModifierIndex: -1,// para evitar repetir el modificador del turno anterior
     roundScores: {},
     totalScores: {},

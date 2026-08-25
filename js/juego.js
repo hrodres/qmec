@@ -74,8 +74,19 @@ function displayModifier() {
     const disp = document.getElementById("modifierDisplay");
     document.getElementById("modifierEmoji").textContent = m.emoji;
     document.getElementById("modifierName").textContent = m.name;
-    document.getElementById("modifierDesc").textContent = m.desc;
+    document.getElementById("modifierDesc").textContent = modifierDescription(m);
     if (disp) disp.style.display = "block";
+}
+
+// Descripcion dinamica: en AEIOU se muestra la vocal elegida para el turno
+// (a/e/i/o/u aleatoria), no siempre la "a" (mejora 2026-08-25).
+function modifierDescription(m) {
+    if (!m) return "";
+    if (m.type === "vowels") {
+        const v = gameState.aeiouVowel || "a";
+        return `Cambia todas las vocales por la vocal «${v.toUpperCase()}»`;
+    }
+    return m.desc;
 }
 
 function displayPhrase() {
@@ -160,6 +171,9 @@ let diceInterval = null;
 
 function showDiceScreen(team) {
     document.getElementById("diceTeamName").textContent = teamLabel(team); // "Equipo N · Nombre"
+    // Indicar la ronda actual del total (mejora 2026-08-25)
+    const roundInfo = document.getElementById("diceRoundInfo");
+    if (roundInfo) roundInfo.textContent = `RONDA ${gameState.currentRound}/${gameState.totalRounds}`;
     document.getElementById("diceFace").textContent = "🎲";
     document.getElementById("diceFace").classList.remove("rolling");
     document.getElementById("rollBtn").style.display = "";
@@ -187,11 +201,16 @@ function rollModifier() {
             // Resultado final: TOTALMENTE aleatorio, sin exclusiones
             const res = MODIFICADORES[Math.floor(Math.random() * MODIFICADORES.length)];
             gameState.currentModifier = res;
+            // AEIOU: eligir UNA vocal aleatoria (a/e/i/o/u) para el turno
+            // (mejora 2026-08-25: antes "jugaba" siempre con la a).
+            if (res.type === "vowels") {
+                gameState.aeiouVowel = ["a", "e", "i", "o", "u"][Math.floor(Math.random() * 5)];
+            }
             face.textContent = res.emoji;
             face.classList.remove("rolling");
             document.getElementById("diceResultEmoji").textContent = res.emoji;
             document.getElementById("diceResultName").textContent = res.name;
-            document.getElementById("diceResultDesc").textContent = res.desc;
+            document.getElementById("diceResultDesc").textContent = modifierDescription(res);
             document.getElementById("diceResult").style.display = "flex";
             btn.style.display = "none";
         }
@@ -354,6 +373,10 @@ function continueFromSummary() {
     const team = gameState.teams[gameState.currentTeamIndex];
     const points = gameState.turnPoints || 0;
 
+    // Indicar la ronda actual del total en el fin de ronda (mejora 2026-08-25)
+    const roundEndInfo = document.getElementById("roundEndRoundInfo");
+    if (roundEndInfo) roundEndInfo.textContent = `RONDA ${gameState.currentRound}/${gameState.totalRounds}`;
+
     document.getElementById("roundEndTeam").textContent = teamLabel(team); // "Equipo N · Nombre"
     document.getElementById("roundEndPoints").textContent = points;
     document.getElementById("roundEndTotal").textContent = gameState.totalScores[team] || 0;
@@ -430,16 +453,20 @@ function assignGuiners() {
 }
 
 // ---- Fin de juego / podio ----
+// Campeón por TARJETAS GÜINER; en empate de güiner, decide el nº de aciertos
+// (mejora 2026-08-25: antes se decidía solo por puntos/aciertos).
 function finishGame() {
     clearPersistedState();
     const ranking = Object.entries(gameState.totalScores)
-        .sort((a, b) => b[1] - a[1]);
-    const champion = ranking[0][0];
+        .map(([name, pts]) => ({ name, pts, guin: gameState.guiner[name] || 0 }))
+        .sort((a, b) => (b.guin - a.guin) || (b.pts - a.pts));
+    const champion = ranking[0].name;
     document.getElementById("championName").textContent = teamLabel(champion); // "Equipo N · Nombre"
     document.getElementById("finalPoints").textContent = gameState.totalScores[champion];
     document.getElementById("finalGuiner").textContent = gameState.guiner[champion] || 0;
 
-    renderPodio(ranking);
+    // Podio: muestra las tarjetas güiner (criterio de victoria), no los puntos
+    renderPodio(ranking.map(e => [e.name, e.guin]));
     showScreen("screenFinal");
 }
 
@@ -463,6 +490,7 @@ function resetGame() {
         phraseBag: [],
         currentPhrase: "",
         currentModifier: null,
+        aeiouVowel: null,
         lastModifierIndex: -1,
         roundScores: {},
         totalScores: {},

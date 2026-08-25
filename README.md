@@ -32,8 +32,8 @@ temporizador por turno, tarjetas **güiner** (ganador de ronda) y podio final.
    del próximo equipo → **Siguiente Ronda**.
 6. Al acabar cada ronda, el equipo con **más aciertos** recibe una **tarjeta güiner**.
    En **empate nadie** la recibe (se mantiene así a propósito).
-7. Tras 10 rondas: **podio** y campeón (por puntos totales; las tarjetas güiner
-   se muestran como mérito adicional).
+7. Tras 10 rondas: **podio** y campeón (**por tarjetas güiner**; en empate de
+   güiner, decide el número de aciertos).
 
 ### Modificadores (6)
 
@@ -42,7 +42,7 @@ temporizador por turno, tarjetas **güiner** (ganador de ronda) y podio final.
 | 🍆 | Berenjena | Sustituye la palabra en MAYÚSCULAS por "BERENJENA" |
 | 🔄 | Del Revés | Lee la frase de atrás hacia adelante, palabra por palabra |
 | 🤪 | Oski | Añade "-OSKI" al final de cada palabra |
-| 🅰️ | AeIoU | Cambia todas las vocales por una vocal aleatoria |
+| 🅰️ | AeIoU | Cambia todas las vocales por la vocal elegida para el turno (a/e/i/o/u aleatoria) |
 | 👅 | Lengua Fuera | ¡Sacando la lengua al hablar! |
 | 🎭 | Interpreta | Sin sonido: ¡mímica! |
 
