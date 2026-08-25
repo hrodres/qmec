@@ -64,6 +64,14 @@ body {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+input, textarea, [contenteditable="true"] {
+  user-select: auto;
+  -webkit-user-select: auto;
 }
 
 /* ---------- Blobs ambientales ---------- */
@@ -1510,6 +1518,44 @@ body:has(#modifierDisplay .vowel-icon) .phrase-card {
   background: linear-gradient(180deg, #D97706 0%, #92400E 100%);
   box-shadow: 0 -6px 24px rgba(217, 119, 6, .35);
 }
+.podium-guiner {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+.final-teams {
+  width: 100%;
+  background: rgba(34, 211, 238, .06);
+  border: 1px solid rgba(34, 211, 238, .28);
+  border-radius: 18px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.final-teams-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.final-team-row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, .06);
+  font-size: 13px;
+}
+.final-team-row:last-child { border-bottom: none; }
+.final-team-pos { color: var(--text-faint); font-weight: 800; }
+.final-team-name { text-align: left; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.final-team-pts { font-weight: 900; color: var(--cyan); }
+.final-team-guin { font-size: 11px; color: var(--text-faint); }
 .final-stats {
   width: 100%;
   background: rgba(139, 92, 246, .08);
