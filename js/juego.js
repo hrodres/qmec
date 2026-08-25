@@ -71,7 +71,22 @@ function displayModifier() {
     applyModifierIcon(document.getElementById("modifierEmoji"), m);
     document.getElementById("modifierName").textContent = m.name;
     document.getElementById("modifierDesc").textContent = modifierDescription(m);
-    if (disp) disp.style.display = "flex"; // pill compacta en el header (antes "block")
+    if (disp) {
+        disp.style.display = "flex"; // chip compacta en el header (nunca display:none)
+        // Fase 1A: tocar la pill del modo expande/contrae la descripción.
+        // onclick directo (sin id nuevo) para que el conductor lea la regla
+        // del turno sin pausar. El emoji + nombre SIEMPRE están visibles.
+        if (!disp.dataset.tapBound) {
+            disp.dataset.tapBound = "1";
+            disp.addEventListener("click", () => {
+                if (disp.classList.contains("expanded")) {
+                    disp.classList.remove("expanded");
+                } else {
+                    disp.classList.add("expanded");
+                }
+            });
+        }
+    }
 }
 
 // Icono del modificador: en AEIOU muestra la vocal ELEGIDA del turno
@@ -97,7 +112,13 @@ function modifierDescription(m) {
 function displayPhrase() {
     // El modificador ya esta fijado para el turno; solo actualizamos la frase.
     const phrase = gameState.currentPhrase;
-    document.getElementById("phraseText").textContent = phrase.texto;
+    const catEl = document.querySelector(".phrase-category");
+    if (catEl) {
+        // Fase 1D: categoria como pista (MODISMO / REFRÁN / POP / ANUNCIO / CANCIÓN)
+        catEl.textContent = (phrase.categoria || "").toUpperCase();
+        catEl.style.display = phrase.categoria ? "" : "none";
+    }
+    document.getElementById("phraseText").textContent = applyModifierToPhrase(phrase);
 }
 
 // ---- Temporizador display ----
@@ -341,10 +362,11 @@ function toggleTurnResult(index) {
     renderTurnSummary();
 }
 
-// ---- Continuar desde el resumen -> fin de ronda ----
+// ---- Continuar desde el resumen -> fin de ronda / fin de turno ----
 function continueFromSummary() {
     const team = gameState.teams[gameState.currentTeamIndex];
     const points = gameState.turnPoints || 0;
+    const isLastTeamOfRound = gameState.currentTeamIndex >= gameState.teams.length - 1;
 
     // Indicar la ronda actual del total en el fin de ronda (mejora 2026-08-25)
     const roundEndInfo = document.getElementById("roundEndRoundInfo");
@@ -370,6 +392,18 @@ function continueFromSummary() {
         });
     } else {
         document.getElementById("timeChangeSection").style.display = "none";
+    }
+
+    // Fase 1B: pantalla honesta. Si quedan equipos por jugar en esta ronda,
+    // esto es un FIN DE TURNO (no de ronda): título/botón lo dicen. Solo el
+    // ÚLTIMO equipo de la ronda ve "¡Fin de Ronda!" / "Siguiente Ronda".
+    const endTitle = document.querySelector(".round-end-title");
+    const endBtn = document.getElementById("nextRoundBtn");
+    if (endTitle) {
+        endTitle.textContent = isLastTeamOfRound ? "¡Fin de Ronda!" : "Fin de Turno";
+    }
+    if (endBtn) {
+        endBtn.textContent = isLastTeamOfRound ? "Siguiente Ronda" : "Siguiente equipo";
     }
 
     // El turno actual ya se jugó (estamos en su fin de ronda): el snapshot
@@ -431,6 +465,8 @@ function assignGuiners() {
 // ---- Fin de juego / podio ----
 // Campeón por TARJETAS GÜINER; en empate de güiner, decide el nº de aciertos
 // (mejora 2026-08-25: antes se decidía solo por puntos/aciertos).
+// Fase 1C: si tras güiner Y puntos totales persiste el empate, se muestra
+// EMPATE en vez de coronar a uno solo (no se silencia).
 function finishGame() {
     clearPersistedState();
     // La partida ya terminó: ocultar "Continuar Partida" si se vuelve al menú
@@ -439,10 +475,33 @@ function finishGame() {
     const ranking = Object.entries(gameState.totalScores)
         .map(([name, pts]) => ({ name, pts, guin: gameState.guiner[name] || 0 }))
         .sort((a, b) => (b.guin - a.guin) || (b.pts - a.pts));
-    const champion = ranking[0].name;
-    document.getElementById("championName").textContent = teamLabel(champion); // "Equipo N · Nombre"
-    document.getElementById("finalPoints").textContent = gameState.totalScores[champion];
-    document.getElementById("finalGuiner").textContent = gameState.guiner[champion] || 0;
+
+    const top = ranking[0];
+    // Desempate documentado: güiner → puntos totales → EMPATE (no coronar solo)
+    const tied = ranking.filter(e => e.guin === top.guin && e.pts === top.pts);
+    const isTie = tied.length > 1;
+
+    const championNameEl = document.getElementById("championName");
+    const championEmojiEl = document.querySelector(".champion-emoji");
+    const kickerEl = document.querySelector(".final-container .screen-kicker");
+    if (isTie) {
+        // Empate total: mostrarlo explícitamente, no silenciarlo
+        championNameEl.textContent = "EMPATE";
+        if (championEmojiEl) championEmojiEl.textContent = "🤝";
+        if (kickerEl) kickerEl.textContent = "EMPATE FINAL";
+        const names = tied.map(e => teamLabel(e.name)).join(" · ");
+        championNameEl.title = names;
+        // Aciertos y güiner de los empatados (idénticos entre ellos)
+        document.getElementById("finalPoints").textContent = gameState.totalScores[top.name];
+        document.getElementById("finalGuiner").textContent = gameState.guiner[top.name] || 0;
+    } else {
+        const champion = top.name;
+        championNameEl.textContent = teamLabel(champion); // "Equipo N · Nombre"
+        if (championEmojiEl) championEmojiEl.textContent = "👑";
+        if (kickerEl) kickerEl.textContent = "CAMPEÓN";
+        document.getElementById("finalPoints").textContent = gameState.totalScores[champion];
+        document.getElementById("finalGuiner").textContent = gameState.guiner[champion] || 0;
+    }
 
     // Podio: muestra las tarjetas güiner (criterio de victoria), no los puntos
     renderPodio(ranking.map(e => [e.name, e.guin]));
