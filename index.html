@@ -106,19 +106,21 @@
         <!-- ═══════════ PANTALLA 3: JUEGO / TURNO ═══════════ -->
         <div id="screenGame" class="screen">
             <header class="game-header">
-                <div class="header-left">
-                    <div class="round-info">RONDA <b><span id="currentRound">1</span>/<span id="totalRounds">10</span></b></div>
-                    <div class="round-progress" id="roundProgress" aria-hidden="true"></div>
-                </div>
-                <div class="header-center">
-                    <div class="header-team" id="teamName">Equipo 1</div>
-                    <div class="header-modifier" id="modifierDisplay" style="display: none;">
-                        <span class="modifier-emoji" id="modifierEmoji">🍆</span>
-                        <span class="modifier-name" id="modifierName">Berenjena</span>
-                        <span class="modifier-description" id="modifierDesc"></span>
+                <div class="header-row">
+                    <div class="header-left">
+                        <div class="round-info">RONDA <b><span id="currentRound">1</span>/<span id="totalRounds">10</span></b></div>
                     </div>
+                    <div class="header-center">
+                        <div class="header-team" id="teamName">Equipo 1</div>
+                        <div class="header-modifier" id="modifierDisplay" style="display: none;">
+                            <span class="modifier-emoji" id="modifierEmoji">🍆</span>
+                            <span class="modifier-name" id="modifierName">Berenjena</span>
+                            <span class="modifier-description" id="modifierDesc"></span>
+                        </div>
+                    </div>
+                    <button type="button" class="pause-btn" id="pauseBtn" aria-label="Pausar" onclick="pauseGame()">⏸</button>
                 </div>
-                <button type="button" class="pause-btn" id="pauseBtn" aria-label="Pausar" onclick="pauseGame()">⏸</button>
+                <div class="round-progress" id="roundProgress" aria-hidden="true"></div>
             </header>
 
             <div class="game-main">
