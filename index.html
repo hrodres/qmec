@@ -112,23 +112,21 @@
                     </div>
                     <div class="header-center">
                         <div class="header-team" id="teamName">Equipo 1</div>
+                    </div>
+                    <div class="header-right">
                         <div class="header-modifier" id="modifierDisplay" style="display: none;">
                             <span class="modifier-emoji" id="modifierEmoji">🍆</span>
                             <span class="modifier-name" id="modifierName">Berenjena</span>
                             <span class="modifier-description" id="modifierDesc"></span>
                         </div>
+                        <button type="button" class="pause-btn" id="pauseBtn" aria-label="Pausar" onclick="pauseGame()">⏸</button>
                     </div>
-                    <button type="button" class="pause-btn" id="pauseBtn" aria-label="Pausar" onclick="pauseGame()">⏸</button>
                 </div>
                 <div class="round-progress" id="roundProgress" aria-hidden="true"></div>
             </header>
 
             <div class="game-main">
                 <div class="live-hits" id="liveHits" aria-live="polite">Aciertos: 0</div>
-
-                <div class="phrase-card" id="phraseCard">
-                    <div class="phrase-text" id="phraseText">Cargando...</div>
-                </div>
 
                 <div class="timer">
                     <div class="timer-ring">
@@ -138,6 +136,10 @@
                             <span class="timer-sub">TIEMPO</span>
                         </div>
                     </div>
+                </div>
+
+                <div class="phrase-card" id="phraseCard">
+                    <div class="phrase-text" id="phraseText">Cargando...</div>
                 </div>
             </div>
 
