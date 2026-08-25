@@ -20,8 +20,9 @@ temporizador por turno, tarjetas **güiner** (ganador de ronda) y podio final.
    - Se elige **UNA vez** un modificador y se muestra durante **2 segundos**.
    - **Regla v2 (nueva):** ese mismo modificador se mantiene fijo durante **TODO el turno**.
      No cambia con cada frase (en la v1 sí lo hacía). Al pasar el turno a otro
-     equipo / nueva ronda, se elige un modificador nuevo (nunca repetido respecto
-     al turno inmediatamente anterior).
+     equipo / nueva ronda, se lanza el dado de nuevo: el resultado es
+     **totalmente aleatorio** (el modificador se puede repetir respecto al
+     turno anterior; no hay exclusiones).
    - El descriptor lee la frase original y la explica aplicando el modificador;
      su equipo adivina.
 3. Botones **✔ Acierto** (+1) y **✖ Pasar** (sin punto). Hay un **contador de
@@ -42,7 +43,7 @@ temporizador por turno, tarjetas **güiner** (ganador de ronda) y podio final.
 | 🍆 | Berenjena | Sustituye la palabra en MAYÚSCULAS por "BERENJENA" |
 | 🔄 | Del Revés | Lee la frase de atrás hacia adelante, palabra por palabra |
 | 🤪 | Oski | Añade "-OSKI" al final de cada palabra |
-| 🅰️ | AeIoU | Cambia todas las vocales por la vocal elegida para el turno (a/e/i/o/u aleatoria) |
+| 🅰️ | AeIoU | Cambia todas las vocales por la vocal del turno. Arranca en **A** y, tras **cada acierto**, sube a la siguiente (A→E→I→O→U→A…) |
 | 👅 | Lengua Fuera | ¡Sacando la lengua al hablar! |
 | 🎭 | Interpreta | Sin sonido: ¡mímica! |
 
@@ -92,8 +93,11 @@ qmec/
 
 ### Nueva regla de juego (decisión de Héctor)
 - El modificador se elige **una sola vez** al inicio del turno y se mantiene
-  **fijo durante todo el turno** (antes se re-rollaba en cada frase). Evita
-  repetir el modificador del turno anterior.
+  **fijo durante todo el turno** (antes se re-rollaba en cada frase). El dado
+  es **totalmente aleatorio**: puede repetir el modificador del turno anterior.
+- **AEIOU (Fase 2A):** la vocal arranca **siempre en A** y sube con cada
+  acierto (A→E→I→O→U→A…). Se muestra en el icono del modo y se aplica a la
+  frase en pantalla.
 
 ### Fixes obligatorios implementados
 - **A1 (crítico):** mazo *shuffle bag* (Fisher–Yates) sin bucle infinito; se
