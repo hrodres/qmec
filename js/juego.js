@@ -97,7 +97,7 @@ function modifierDescription(m) {
 function displayPhrase() {
     // El modificador ya esta fijado para el turno; solo actualizamos la frase.
     const phrase = gameState.currentPhrase;
-    document.getElementById("phraseText").textContent = phrase;
+    document.getElementById("phraseText").textContent = phrase.texto;
 }
 
 // ---- Temporizador display ----
