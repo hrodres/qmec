@@ -32,7 +32,6 @@ function makeTeamIds(names) {
 let gameState = {
     teams: [],            // lista de displayNames unicos
     teamTimes: {},        // { displayName: segundos }
-    teamDiscards: {},     // { displayName: limite de descartes/turno (0..5 | Infinity) }
     teamNumbers: {},      // { displayName: numero original del equipo en el setup (1..N) }
     currentRound: 1,
     totalRounds: TOTAL_ROUNDS, // rondas elegidas en el setup (default 10)
@@ -67,7 +66,6 @@ function persistState() {
         const snap = {
             teams: gameState.teams,
             teamTimes: gameState.teamTimes,
-            teamDiscards: gameState.teamDiscards,
             teamNumbers: gameState.teamNumbers,
             currentRound: gameState.currentRound,
             totalRounds: gameState.totalRounds,
@@ -90,7 +88,6 @@ function loadPersistedState() {
         if (!snap || !Array.isArray(snap.teams) || snap.teams.length === 0) return false;
         gameState.teams = snap.teams;
         gameState.teamTimes = snap.teamTimes || {};
-        gameState.teamDiscards = snap.teamDiscards || {};
         gameState.teamNumbers = snap.teamNumbers || {};
         gameState.currentRound = snap.currentRound || 1;
         gameState.totalRounds = snap.totalRounds || TOTAL_ROUNDS;
