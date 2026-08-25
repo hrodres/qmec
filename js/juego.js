@@ -126,34 +126,15 @@ function displayPhrase() {
         catEl.textContent = (phrase.categoria || "").toUpperCase();
         catEl.style.display = phrase.categoria ? "" : "none";
     }
-    document.getElementById("phraseText").textContent = applyModifierToPhrase(phrase);
+    // Fix livebug 3 (AEIOU): frase ESCRITA NORMAL; el jugador cambia las
+    // vocales al hablar. El icono/descripcion del modo indica la vocal a usar.
+    document.getElementById("phraseText").textContent = phrase.texto;
 }
 
-// ---- Aplicación del modificador al TEXTO mostrado ----
-// Solo AEIOU transforma el texto; el resto de modificadores son reglas de
-// DESCRIPCIÓN (la frase original se muestra tal cual).
-function applyModifierToPhrase(phrase) {
-    if (!phrase || !phrase.texto) return "";
-    if (gameState.currentModifier && gameState.currentModifier.type === "vowels") {
-        const vowel = (gameState.aeiouVowel || "a")[0] || "a";
-        return applyAEIOU(phrase.texto, vowel);
-    }
-    return phrase.texto;
-}
-
-// ---- AEIOU: sustituye TODAS las vocales (con y sin tilde, may/min) -------
-// Conserva mayúsculas (A→A, a→a) y normaliza las tildes: la vocal de
-// sustitución va SIN tilde (regla cerrada de Héctor: cambia por la vocal
-// actual, no por una acentuada).
+// ---- AEIOU: vocal actual del turno (se avanza en cada acierto en markCorrect) ----
+// La frase se muestra ESCRITA NORMAL; el jugador cambia las vocales AL HABLAR.
+// El icono y la descripcion del modo indican la vocal a usar (a/e/i/o/u).
 const AEIOU_VOWELS = ["a", "e", "i", "o", "u"];
-const AEIOU_RE = /[aáàäâAÁÀÄÂeéèëêEÉÈËÊiíìïîIÍÌÏÎoóòöôOÓÒÖÔuúùüûUÚÙÜÛ]/g;
-function applyAEIOU(text, vowel) {
-    const v = (vowel || "a").toLowerCase()[0] || "a";
-    return String(text).replace(AEIOU_RE, (ch) => {
-        // Si la vocal original era MAYÚSCULA, la sustitución va en mayúscula
-        return (ch === ch.toUpperCase()) ? v.toUpperCase() : v;
-    });
-}
 
 // ---- Temporizador display ----
 function updateTimerDisplay(remSec, totalSec) {
@@ -182,6 +163,8 @@ function schedulePreTurn() {
         preTurnTimeout = null;
         if (!gameState.isRunning) return; // pausado/reset durante la intro
         gameState.roundStarted = true;
+        disableActionButtons(false); // Fix livebug 1: habilitar Acierto/Pasar al arrancar
+        antiDoubleTap = false;
         Temporizador.start(gameState.totalTime, {
             onTick: (remSec, totalSec) => updateTimerDisplay(remSec, totalSec),
             onEnd: () => endTurn()
