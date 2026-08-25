@@ -1015,3 +1015,23 @@ input[type="text"]::placeholder { color: var(--text-secondary); }
         scroll-behavior: auto !important;
     }
 }
+
+/* ===== Icono AEIOU: la vocal ELEGIDA del turno (mejora 2026-08-25) ===== */
+/* El icono ya no es siempre el emoji fijo 🅰️: muestra la vocal (A/E/I/O/U)
+   en una insignia circular con la misma estética del juego. */
+.vowel-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5em;
+    height: 1.5em;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: #fff;
+    font-weight: 800;
+    line-height: 1;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+}
+.dice-face.vowel-icon {
+    font-size: clamp(3rem, 12vw, 5.5rem);
+}

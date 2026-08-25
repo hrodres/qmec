@@ -72,10 +72,19 @@ function displayModifier() {
     const m = gameState.currentModifier;
     if (!m) return;
     const disp = document.getElementById("modifierDisplay");
-    document.getElementById("modifierEmoji").textContent = m.emoji;
+    applyModifierIcon(document.getElementById("modifierEmoji"), m);
     document.getElementById("modifierName").textContent = m.name;
     document.getElementById("modifierDesc").textContent = modifierDescription(m);
     if (disp) disp.style.display = "block";
+}
+
+// Icono del modificador: en AEIOU muestra la vocal ELEGIDA del turno
+// (mejora 2026-08-25: antes el icono era siempre el emoji fijo 🅰️).
+function applyModifierIcon(el, m) {
+    if (!el || !m) return;
+    const isVowels = m.type === "vowels";
+    el.textContent = isVowels ? (gameState.aeiouVowel || "a").toUpperCase() : m.emoji;
+    el.classList.toggle("vowel-icon", isVowels);
 }
 
 // Descripcion dinamica: en AEIOU se muestra la vocal elegida para el turno
@@ -208,7 +217,8 @@ function rollModifier() {
             }
             face.textContent = res.emoji;
             face.classList.remove("rolling");
-            document.getElementById("diceResultEmoji").textContent = res.emoji;
+            applyModifierIcon(face, res);
+            applyModifierIcon(document.getElementById("diceResultEmoji"), res);
             document.getElementById("diceResultName").textContent = res.name;
             document.getElementById("diceResultDesc").textContent = modifierDescription(res);
             document.getElementById("diceResult").style.display = "flex";
