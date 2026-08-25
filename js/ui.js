@@ -147,7 +147,7 @@ function renderTurnSummary() {
         row.className = "turn-summary-item " + (isCorrect ? "ok" : "miss");
         row.innerHTML = `
             <span class="turn-summary-icon">${isCorrect ? "✔" : (isPending ? "·" : "✖")}</span>
-            <span class="turn-summary-phrase">${esc(item.phrase)}</span>
+            <span class="turn-summary-phrase">${esc(item.phrase.texto)}</span>
             <button type="button" class="turn-summary-toggle" onclick="toggleTurnResult(${idx})" aria-label="Corregir">🔄</button>
         `;
         list.appendChild(row);
