@@ -126,6 +126,9 @@ function startNewTurn() {
     // el Temporizador espera SEGUNDOS -> convertir aqui (fix unidades 2026-08-24).
     gameState.totalTime = (gameState.teamTimes[team] || 300) / 10;
     gameState.timeLeft = gameState.totalTime;
+    // Mostrar el tiempo CONFIGURADO del turno desde el inicio (antes arrancaba
+    // el marcador con el default 00:30 hasta que el timer tomaba el control).
+    updateTimerDisplay(gameState.totalTime, gameState.totalTime);
     gameState.isRunning = false;   // aun no corre: esperamos al dado
     gameState.roundStarted = false;
     gameState.roundScores[team] = 0;
