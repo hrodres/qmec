@@ -53,6 +53,8 @@ let gameState = {
     timeLeft: 0,          // segundos restantes (decimal interno)
     turnHistory: [],      // frases del turno actual: [{ phrase, correct|null }]
     turnPoints: 0,        // puntos del turno actual (recalculables en el resumen)
+    resumeAdvance: false, // true = el turno guardado YA se jugó; al reanudar hay que
+                          // avanzar al siguiente equipo/ronda (fix 2026-08-25)
 };
 
 // ---- Persistencia ligera (nombres de equipo, tiempos, records) ----
@@ -73,7 +75,8 @@ function persistState() {
             roundScores: gameState.roundScores,
             totalScores: gameState.totalScores,
             guiner: gameState.guiner,
-            isRunning: false // no reanudamos timers automaticamente
+            isRunning: false, // no reanudamos timers automaticamente
+            resumeAdvance: !!gameState.resumeAdvance
         };
         localStorage.setItem(LS_KEY, JSON.stringify(snap));
     } catch (e) { /* almacenamiento no disponible: ignorar */ }
@@ -95,6 +98,7 @@ function loadPersistedState() {
         gameState.roundScores = snap.roundScores || {};
         gameState.totalScores = snap.totalScores || {};
         gameState.guiner = snap.guiner || {};
+        gameState.resumeAdvance = !!snap.resumeAdvance;
         return true;
     } catch (e) {
         return false;

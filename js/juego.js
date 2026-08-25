@@ -172,6 +172,9 @@ function startNewTurn() {
     // 🎲 El jugador LANZA el dado para elegir el modificador de este turno
     showDiceScreen(team);
 
+    // Turno NUEVO pendiente de jugar: si se reanuda desde aquí, toca jugarlo
+    // (no repetir el anterior) (fix 2026-08-25).
+    gameState.resumeAdvance = false;
     persistState();
 }
 
@@ -239,6 +242,7 @@ function startTurnFromDice() {
     setLiveHits(0);
     setPhraseVisible(true);
     schedulePreTurn();
+    gameState.resumeAdvance = false; // turno en curso -> reanudar lo rehace desde el dado
     persistState();
 }
 
@@ -353,6 +357,10 @@ function endTurn() {
     gameState.roundScores[team] = points;
     gameState.totalScores[team] = (gameState.totalScores[team] || 0) + points;
 
+    // El turno guardado YA se jugó: al reanudar hay que avanzar al siguiente
+    // equipo/ronda (fix 2026-08-25: sin esto el mismo equipo repetía turno).
+    gameState.resumeAdvance = true;
+
     renderTurnSummary();
     persistState();
     showScreen("screenTurnSummary");
@@ -409,6 +417,9 @@ function continueFromSummary() {
         document.getElementById("timeChangeSection").style.display = "none";
     }
 
+    // El turno actual ya se jugó (estamos en su fin de ronda): el snapshot
+    // debe indicar que al reanudar toca AVANZAR, no repetir el turno.
+    gameState.resumeAdvance = true;
     persistState();
     showScreen("screenRoundEnd");
 }
@@ -512,7 +523,8 @@ function resetGame() {
         turnPoints: 0,
         totalRounds: TOTAL_ROUNDS,
         teamDiscards: {},
-        teamNumbers: {}
+        teamNumbers: {},
+        resumeAdvance: false
     };
     setupTimes = {};
     setupDiscards = {};
@@ -525,6 +537,7 @@ function goToHome() {
     Temporizador.cancel();
     if (preTurnTimeout !== null) { clearTimeout(preTurnTimeout); preTurnTimeout = null; }
     resetGame();
+    clearPersistedState(); // salir adrede: no ofrecer continuar una partida abandonada
     showScreen("screenHome");
 }
 
@@ -547,7 +560,22 @@ function resumeGame() {
     gameState.currentModifier = null;
     gameState.aeiouVowel = null;
 
+    // Si el turno guardado YA se jugó (snapshot de endTurn/fin de ronda),
+    // AVANZAR al siguiente equipo/ronda en vez de repetir el turno jugado
+    // (fix 2026-08-25: al reanudar se repetía el turno/ronda del mismo equipo).
+    if (gameState.resumeAdvance) {
+        gameState.resumeAdvance = false;
+        nextRound();
+        return;
+    }
+
     const team = gameState.teams[gameState.currentTeamIndex];
+    // Recalcular el tiempo del turno: el snapshot NO guarda totalTime y, sin
+    // esto, el temporizador arrancaba con 0s -> turno instantaneo (fix 2026-08-25).
+    gameState.totalTime = (gameState.teamTimes[team] || 300) / 10;
+    gameState.timeLeft = gameState.totalTime;
+    updateTimerDisplay(gameState.totalTime, gameState.totalTime);
+
     setupRoundProgress();
     updateScoreboard();
     updateRoundProgress();
