@@ -71,7 +71,7 @@ function displayModifier() {
     applyModifierIcon(document.getElementById("modifierEmoji"), m);
     document.getElementById("modifierName").textContent = m.name;
     document.getElementById("modifierDesc").textContent = modifierDescription(m);
-    if (disp) disp.style.display = "block";
+    if (disp) disp.style.display = "flex"; // pill compacta en el header (antes "block")
 }
 
 // Icono del modificador: en AEIOU muestra la vocal ELEGIDA del turno
