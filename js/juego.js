@@ -537,15 +537,13 @@ function updateTeamCount() {
                     <button type="button" class="time-btn" data-team="${i}" data-discard="1" onclick="selectTeamDiscard(${i}, 1)">1</button>
                     <button type="button" class="time-btn" data-team="${i}" data-discard="2" onclick="selectTeamDiscard(${i}, 2)">2</button>
                     <button type="button" class="time-btn" data-team="${i}" data-discard="3" onclick="selectTeamDiscard(${i}, 3)">3</button>
-                    <button type="button" class="time-btn" data-team="${i}" data-discard="4" onclick="selectTeamDiscard(${i}, 4)">4</button>
-                    <button type="button" class="time-btn" data-team="${i}" data-discard="5" onclick="selectTeamDiscard(${i}, 5)">5</button>
                     <button type="button" class="time-btn" data-team="${i}" data-discard="inf" onclick="selectTeamDiscard(${i}, 'inf')">∞</button>
                 </div>
             </div>
         `;
         container.appendChild(div);
         if (setupTimes[i] === undefined) setupTimes[i] = 300; // 30s por defecto (B1: un solo boton 30s)
-        if (setupDiscards[i] === undefined) setupDiscards[i] = 3; // 3 descartes/turno por defecto
+        if (setupDiscards[i] === undefined) setupDiscards[i] = 0; // 0 descartes/turno por defecto (solo si el equipo lo activa)
     }
 
     // Marcar activo el tiempo y el limite de descartes por defecto de cada equipo
@@ -624,7 +622,7 @@ function startGame() {
         gameState.guiner[team] = 0;
         // mapear el tiempo y el limite de descartes seleccionados por indice
         gameState.teamTimes[team] = times[idx + 1] || 300;
-        gameState.teamDiscards[team] = setupDiscards[idx + 1] !== undefined ? setupDiscards[idx + 1] : 3;
+        gameState.teamDiscards[team] = setupDiscards[idx + 1] !== undefined ? setupDiscards[idx + 1] : 0;
         gameState.teamNumbers[team] = idx + 1; // numero ORIGINAL del setup ("Equipo N · Nombre")
     });
 
