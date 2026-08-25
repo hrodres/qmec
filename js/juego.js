@@ -510,11 +510,12 @@ function finishGame() {
     if (btnResume) btnResume.style.display = "none";
     const ranking = Object.entries(gameState.totalScores)
         .map(([name, pts]) => ({ name, pts, guin: gameState.guiner[name] || 0 }))
-        .sort((a, b) => (b.guin - a.guin) || (b.pts - a.pts));
+        // Opción 2 (Héctor 2026-08-25): campeón por PUNTOS TOTALES; güiner desempata
+        .sort((a, b) => (b.pts - a.pts) || (b.guin - a.guin));
 
     const top = ranking[0];
-    // Desempate documentado: güiner → puntos totales → EMPATE (no coronar solo)
-    const tied = ranking.filter(e => e.guin === top.guin && e.pts === top.pts);
+    // Empate total: mismos puntos Y mismas güiner -> EMPATE honesto (no coronar solo)
+    const tied = ranking.filter(e => e.pts === top.pts && e.guin === top.guin);
     const isTie = tied.length > 1;
 
     const championNameEl = document.getElementById("championName");
@@ -539,8 +540,8 @@ function finishGame() {
         document.getElementById("finalGuiner").textContent = gameState.guiner[champion] || 0;
     }
 
-    // Podio: muestra las tarjetas güiner (criterio de victoria), no los puntos
-    renderPodio(ranking.map(e => [e.name, e.guin]));
+    // Podio + lista completa de equipos (muestra puntos y güiner de todos)
+    renderPodio(ranking);
     showScreen("screenFinal");
 }
 

@@ -95,17 +95,42 @@ function renderPodio(ranking) {
     podiumContainer.innerHTML = "";
     const medals = ["🥇", "🥈", "🥉"];
     const podiumClasses = ["first", "second", "third"];
+    // Podio de 3 (oro/plata/bronce) por PUNTOS totales (criterio de victoria)
     ranking.slice(0, 3).forEach((entry, idx) => {
-        const [name, score] = entry;
+        const name = entry.name;
+        const pts = entry.pts;
+        const guin = entry.guin || 0;
         const div = document.createElement("div");
         div.className = "podium-place";
         div.innerHTML = `
             <div class="podium-medal">${medals[idx]}</div>
-            <div class="podium-name">${esc(teamLabel(name))}</div>
-            <div class="podium-bar ${podiumClasses[idx]}">${score}</div>
+            <div class="podium-name">${esc("" + (idx + 1) + ". " + teamLabel(name))}</div>
+            <div class="podium-bar ${podiumClasses[idx]}">${pts}</div>
+            <div class="podium-guiner">🎯 ${guin}</div>
         `;
         podiumContainer.appendChild(div);
     });
+
+    // Lista completa de TODOS los equipos con sus puntos y güiner
+    const teamsBox = document.querySelector(".final-teams");
+    if (teamsBox) {
+        teamsBox.innerHTML = "";
+        const title = document.createElement("div");
+        title.className = "final-teams-title";
+        title.textContent = "Puntos por equipo";
+        teamsBox.appendChild(title);
+        ranking.forEach((entry, idx) => {
+            const row = document.createElement("div");
+            row.className = "final-team-row";
+            row.innerHTML = `
+                <span class="final-team-pos">${idx + 1}</span>
+                <span class="final-team-name">${esc(teamLabel(entry.name))}</span>
+                <span class="final-team-pts">${entry.pts}</span>
+                <span class="final-team-guin">🎯 ${entry.guin || 0}</span>
+            `;
+            teamsBox.appendChild(row);
+        });
+    }
 }
 
 // ---- Resumen del turno (frases acertadas/falladas + correccion) ----
