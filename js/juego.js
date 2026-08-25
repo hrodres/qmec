@@ -24,8 +24,6 @@ let pausedBeforeStart = false;
 
 // Tiempo seleccionado en el setup por equipo (indice 1..N)
 let setupTimes = {};
-// Limite de descartes por turno elegido en el setup por equipo (0..5 | Infinity)
-let setupDiscards = {};
 // Orden de juego de los equipos: "manual" (orden de escritura) | "random" (barajado)
 let setupOrderMode = "manual";
 
@@ -33,10 +31,8 @@ let setupOrderMode = "manual";
 function disableActionButtons(disabled) {
     const c = document.getElementById("btnCorrect");
     const p = document.getElementById("btnPass");
-    const d = document.getElementById("btnDiscard");
     if (c) c.disabled = disabled;
     if (p) p.disabled = disabled;
-    if (d) d.disabled = disabled;
 }
 
 function updatePauseButton(paused) {
@@ -63,7 +59,7 @@ function showNextPhrase() {
     }
     gameState.currentPhrase = gameState.phraseBag.pop();
     // Registro para el resumen del turno (pendiente: null -> se resuelve al pulsar)
-    gameState.turnHistory.push({ phrase: gameState.currentPhrase, correct: null, discarded: false });
+    gameState.turnHistory.push({ phrase: gameState.currentPhrase, correct: null });
     displayPhrase(); // NO cambia el modificador (regla nueva)
 }
 
@@ -234,7 +230,6 @@ function startTurnFromDice() {
     if (!gameState.currentModifier) return;
     gameState.isRunning = true;
     disableActionButtons(false);
-    updateDiscardButton(); // texto con el limite del equipo ("🗑 Descartar (0/3)")
     updatePauseButton(false);
     showScreen("screenGame");
     displayModifier();
@@ -269,38 +264,6 @@ function markPass() {
     showNextPhrase();
 }
 
-// ---- Descartar tarjeta (respetando el limite por turno elegido para el equipo) ----
-function updateDiscardButton() {
-    const btn = document.getElementById("btnDiscard");
-    if (!btn) return;
-    const team = gameState.teams[gameState.currentTeamIndex];
-    const limit = gameState.teamDiscards[team] !== undefined ? gameState.teamDiscards[team] : 3;
-    const used = gameState.turnHistory.filter(t => t.discarded === true).length;
-    const label = limit === Infinity ? "∞" : String(limit);
-    btn.textContent = `🗑 Descartar (${used}/${label})`;
-    // No pisar el disabled global durante pausa/pre-turn: solo limitamos aqui
-    if (gameState.isRunning && gameState.roundStarted) {
-        btn.disabled = limit !== Infinity && used >= limit;
-    }
-}
-
-function markDiscard() {
-    if (!gameState.isRunning || !gameState.roundStarted) return;
-    if (Temporizador.getRemainingSeconds() <= 0) return;
-    const team = gameState.teams[gameState.currentTeamIndex];
-    const limit = gameState.teamDiscards[team] !== undefined ? gameState.teamDiscards[team] : 3;
-    const used = gameState.turnHistory.filter(t => t.discarded === true).length;
-    if (limit !== Infinity && used >= limit) {
-        updateDiscardButton(); // ya no quedan descartes este turno
-        return;
-    }
-    const last = gameState.turnHistory[gameState.turnHistory.length - 1];
-    if (last) last.discarded = true;
-    vibrate(15);
-    updateDiscardButton();
-    showNextPhrase();
-}
-
 // ---- Pausa / reanudar (A3, B5) ----
 function pauseGame() {
     if (gameState.isRunning) {
@@ -323,7 +286,6 @@ function pauseGame() {
         }
         gameState.isRunning = true;
         disableActionButtons(false);
-        updateDiscardButton(); // re-aplicar limite del equipo al reanudar
         updatePauseButton(false);
         if (gameState.roundStarted) {
             Temporizador.resume();
@@ -347,9 +309,8 @@ function endTurn() {
     updatePauseButton(false);
 
     // La frase que quedaba en pantalla sin responder cuenta como fallada
-    // (salvo si se descarto: las 🗑 no puntuan ni cuentan como fallo)
     const last = gameState.turnHistory[gameState.turnHistory.length - 1];
-    if (last && last.correct === null && !last.discarded) last.correct = false;
+    if (last && last.correct === null) last.correct = false;
 
     const team = gameState.teams[gameState.currentTeamIndex];
     const points = gameState.turnHistory.filter(t => t.correct === true).length;
@@ -372,13 +333,7 @@ function toggleTurnResult(index) {
     if (!item) return;
     const team = gameState.teams[gameState.currentTeamIndex];
     const wasCorrect = item.correct === true;
-    if (item.discarded) {
-        // La descartaste por error: se convierte en acierto
-        item.discarded = false;
-        item.correct = true;
-    } else {
-        item.correct = !wasCorrect;
-    }
+    item.correct = !wasCorrect;
     const points = gameState.turnHistory.filter(t => t.correct === true).length;
     gameState.turnPoints = points;
     gameState.roundScores[team] = points;
@@ -478,6 +433,9 @@ function assignGuiners() {
 // (mejora 2026-08-25: antes se decidía solo por puntos/aciertos).
 function finishGame() {
     clearPersistedState();
+    // La partida ya terminó: ocultar "Continuar Partida" si se vuelve al menú
+    const btnResume = document.getElementById("btnResume");
+    if (btnResume) btnResume.style.display = "none";
     const ranking = Object.entries(gameState.totalScores)
         .map(([name, pts]) => ({ name, pts, guin: gameState.guiner[name] || 0 }))
         .sort((a, b) => (b.guin - a.guin) || (b.pts - a.pts));
@@ -502,7 +460,6 @@ function resetGame() {
     gameState = {
         teams: [],
         teamTimes: {},
-        teamDiscards: {},
         currentRound: 1,
         currentTeamIndex: 0,
         isRunning: false,
@@ -522,12 +479,10 @@ function resetGame() {
         turnHistory: [],
         turnPoints: 0,
         totalRounds: TOTAL_ROUNDS,
-        teamDiscards: {},
         teamNumbers: {},
         resumeAdvance: false
     };
     setupTimes = {};
-    setupDiscards = {};
     // setupOrderMode NO se resetea: la preferencia de orden persiste en la sesion
 }
 
@@ -538,6 +493,23 @@ function goToHome() {
     if (preTurnTimeout !== null) { clearTimeout(preTurnTimeout); preTurnTimeout = null; }
     resetGame();
     clearPersistedState(); // salir adrede: no ofrecer continuar una partida abandonada
+    const btnResume = document.getElementById("btnResume");
+    if (btnResume) btnResume.style.display = "none";
+    showScreen("screenHome");
+}
+
+// ---- Terminar partida a mitad (botón ⏹) ----
+// Pide confirmación, borra la partida guardada (para que NO aparezca
+// "Continuar Partida") y vuelve al menú principal.
+function endGameEarly() {
+    if (!gameState.teams || gameState.teams.length === 0) return;
+    if (!window.confirm("¿Terminar la partida? Se perderá todo el progreso.")) return;
+    Temporizador.cancel();
+    if (preTurnTimeout !== null) { clearTimeout(preTurnTimeout); preTurnTimeout = null; }
+    resetGame();
+    clearPersistedState();
+    const btnResume = document.getElementById("btnResume");
+    if (btnResume) btnResume.style.display = "none";
     showScreen("screenHome");
 }
 
@@ -630,32 +602,16 @@ function updateTeamCount() {
                     <button type="button" class="time-btn" data-team="${i}" data-time="600" onclick="selectTeamTime(${i}, 600)">60s</button>
                 </div>
             </div>
-            <div class="team-input-group">
-                <label for="discard${i}">🗑 Descartar por turno (máx)</label>
-                <div class="time-options-setup">
-                    <button type="button" class="time-btn" data-team="${i}" data-discard="0" onclick="selectTeamDiscard(${i}, 0)">0</button>
-                    <button type="button" class="time-btn" data-team="${i}" data-discard="1" onclick="selectTeamDiscard(${i}, 1)">1</button>
-                    <button type="button" class="time-btn" data-team="${i}" data-discard="2" onclick="selectTeamDiscard(${i}, 2)">2</button>
-                    <button type="button" class="time-btn" data-team="${i}" data-discard="3" onclick="selectTeamDiscard(${i}, 3)">3</button>
-                    <button type="button" class="time-btn" data-team="${i}" data-discard="inf" onclick="selectTeamDiscard(${i}, 'inf')">∞</button>
-                </div>
-            </div>
         `;
         container.appendChild(div);
         if (setupTimes[i] === undefined) setupTimes[i] = 300; // 30s por defecto (B1: un solo boton 30s)
-        if (setupDiscards[i] === undefined) setupDiscards[i] = 0; // 0 descartes/turno por defecto (solo si el equipo lo activa)
     }
 
-    // Marcar activo el tiempo y el limite de descartes por defecto de cada equipo
+    // Marcar activo el tiempo por defecto de cada equipo
     for (let i = 1; i <= count; i++) {
         const t = setupTimes[i] || 300;
         document.querySelectorAll(`[data-team="${i}"][data-time]`).forEach(btn => {
             btn.classList.toggle("active", parseInt(btn.dataset.time, 10) === t);
-        });
-        const d = setupDiscards[i];
-        document.querySelectorAll(`[data-team="${i}"][data-discard]`).forEach(btn => {
-            const bv = btn.dataset.discard === "inf" ? Infinity : parseInt(btn.dataset.discard, 10);
-            btn.classList.toggle("active", bv === d);
         });
     }
 }
@@ -670,16 +626,6 @@ function selectTeamTime(teamIndex, seconds) {
     setupTimes[teamIndex] = seconds;
     document.querySelectorAll(`[data-team="${teamIndex}"][data-time]`).forEach(btn => {
         btn.classList.toggle("active", parseInt(btn.dataset.time, 10) === seconds);
-    });
-}
-
-// ---- Limite de descartes por turno (configurable por equipo en el setup) ----
-function selectTeamDiscard(teamIndex, value) {
-    setupDiscards[teamIndex] = value === "inf" ? Infinity : parseInt(value, 10);
-    const v = setupDiscards[teamIndex];
-    document.querySelectorAll(`[data-team="${teamIndex}"][data-discard]`).forEach(btn => {
-        const bv = btn.dataset.discard === "inf" ? Infinity : parseInt(btn.dataset.discard, 10);
-        btn.classList.toggle("active", bv === v);
     });
 }
 
@@ -720,9 +666,8 @@ function startGame() {
     teams.forEach((team, idx) => {
         gameState.totalScores[team] = 0;
         gameState.guiner[team] = 0;
-        // mapear el tiempo y el limite de descartes seleccionados por indice
+        // mapear el tiempo seleccionado por indice
         gameState.teamTimes[team] = times[idx + 1] || 300;
-        gameState.teamDiscards[team] = setupDiscards[idx + 1] !== undefined ? setupDiscards[idx + 1] : 0;
         gameState.teamNumbers[team] = idx + 1; // numero ORIGINAL del setup ("Equipo N · Nombre")
     });
 
@@ -767,10 +712,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 if (typeof module !== "undefined") {
     module.exports = {
-        startNewTurn, showNextPhrase, markCorrect, markPass, markDiscard, pauseGame,
+        startNewTurn, showNextPhrase, markCorrect, markPass, pauseGame,
         endTurn, nextRound, assignGuiners, finishGame, resetGame,
         goToHome, goToSetup, updateTeamCount, selectTeamTime, startGame,
-        resumeGame,
+        resumeGame, endGameEarly,
         toggleInstructions, changeNextTeamTime, schedulePreTurn, refillBag,
         rollModifier, startTurnFromDice, toggleTurnResult, continueFromSummary,
         showDiceScreen, updateRoundsCount

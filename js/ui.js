@@ -129,7 +129,7 @@ function renderPodio(ranking) {
     });
 }
 
-// ---- Resumen del turno (frases acertadas/falladas/descartadas + correccion) ----
+// ---- Resumen del turno (frases acertadas/falladas + correccion) ----
 // Las tarjetas se muestran EN EL ORDEN EN QUE SALIERON durante el turno
 // (decision de Hector 2026-08-24: el barajado aqui generaba caos al corregir).
 function renderTurnSummary() {
@@ -141,13 +141,12 @@ function renderTurnSummary() {
 
     list.innerHTML = "";
     gameState.turnHistory.forEach((item, idx) => {
-        const isDiscarded = item.discarded === true;
-        const isCorrect = !isDiscarded && item.correct === true;
-        const isPending = !isDiscarded && item.correct === null;
+        const isCorrect = item.correct === true;
+        const isPending = item.correct === null;
         const row = document.createElement("div");
-        row.className = "turn-summary-item " + (isDiscarded ? "discard" : (isCorrect ? "ok" : "miss"));
+        row.className = "turn-summary-item " + (isCorrect ? "ok" : "miss");
         row.innerHTML = `
-            <span class="turn-summary-icon">${isDiscarded ? "🗑" : (isCorrect ? "✔" : (isPending ? "·" : "✖"))}</span>
+            <span class="turn-summary-icon">${isCorrect ? "✔" : (isPending ? "·" : "✖")}</span>
             <span class="turn-summary-phrase">${esc(item.phrase)}</span>
             <button type="button" class="turn-summary-toggle" onclick="toggleTurnResult(${idx})" aria-label="Corregir">🔄</button>
         `;

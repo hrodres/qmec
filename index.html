@@ -37,7 +37,7 @@
                     <p>🃏 Las tarjetas se barajan al inicio de la partida; al agotarse todas, se vuelven a mezclar y se sigue jugando.</p>
                     <p>🎲 Hay 6 modificadores: Berenjena, Del Revés, Oski, Vocales, Lengua Fuera e Interpreta.</p>
                     <p>✅ El jugador DESCRIBE la frase original con el modificador. Los otros ADIVINAN.</p>
-                    <p>✔ Acierto = 1 punto. Pasar = sin puntos. 🗑 Descartar = quitar la tarjeta sin puntos (con el límite por equipo que elijáis).</p>
+                    <p>✔ Acierto = 1 punto. Pasar = sin puntos.</p>
                     <p>🏆 Gana quien más tarjetas güiner consiga; en caso de empate, gana el que más aciertos tenga.</p>
                     <p>📋 Puedes elegir el orden de juego de los equipos (manual o aleatorio) al configurar la partida.</p>
                     <p>🎲 Al inicio de cada turno, lanza el dado: el modificador que salga es el de TODO tu turno.</p>
@@ -110,7 +110,10 @@
                     <div class="round-info">RONDA <b><span id="currentRound">1</span>/<span id="totalRounds">10</span></b></div>
                     <div class="round-progress" id="roundProgress" aria-hidden="true"></div>
                 </div>
-                <button type="button" class="pause-btn" id="pauseBtn" aria-label="Pausar" onclick="pauseGame()">⏸</button>
+                <div class="game-header-actions">
+                    <button type="button" class="pause-btn" id="pauseBtn" aria-label="Pausar" onclick="pauseGame()">⏸</button>
+                    <button type="button" class="pause-btn end-btn" aria-label="Terminar partida" onclick="endGameEarly()" title="Terminar partida">⏹</button>
+                </div>
             </header>
 
             <div class="game-main">
@@ -150,8 +153,6 @@
                 <button type="button" class="btn btn-success btn-action" id="btnCorrect" onclick="markCorrect()">✔ Acierto</button>
                 <button type="button" class="btn btn-pass btn-action" id="btnPass" onclick="markPass()">⏭ Pasar</button>
             </div>
-            <button type="button" class="btn btn-discard" id="btnDiscard" onclick="markDiscard()">🗑 Descartar</button>
-
             <aside class="scoreboard" aria-label="Marcador">
                 <div class="scoreboard-title">Marcador</div>
                 <div class="scoreboard-teams" id="scoreboardTeams"></div>
