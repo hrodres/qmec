@@ -18,8 +18,9 @@
                     <div class="logo">¿QUÉ ME ESTÁS<br>CONTAINER?</div>
                     <p class="tagline">El party game español para pasar un rato de risas</p>
                 </div>
-                <button class="btn btn-primary" onclick="goToSetup()">▶ Nueva Partida</button>
-                <button class="btn btn-secondary btn-small" onclick="toggleInstructions()">📖 Instrucciones</button>
+                <button type="button" class="btn btn-primary" onclick="goToSetup()">▶ Nueva Partida</button>
+                <button type="button" class="btn btn-secondary" id="btnResume" onclick="resumeGame()" style="display: none;">▶ Continuar Partida</button>
+                <button type="button" class="btn btn-secondary btn-small" onclick="toggleInstructions()">📖 Instrucciones</button>
                 <div id="instructions" class="instructions">
                     <h3>¿Cómo se juega?</h3>
                     <p>📌 Cada equipo tiene su tiempo configurado para adivinar frases.</p>
@@ -40,7 +41,7 @@
         <!-- PANTALLA 2: CONFIGURACIÓN -->
         <div id="screenSetup" class="screen">
             <div class="header">
-                <button class="header-back" onclick="goToHome()">← Atrás</button>
+                <button type="button" class="header-back" onclick="goToHome()">← Atrás</button>
                 <h1>Configurar Juego</h1>
             </div>
             <div class="setup-container">
@@ -65,7 +66,7 @@
                     </div>
                     <p class="setup-hint">Manual: juegan en el orden que los escribes. Aleatorio: se barajan al empezar.</p>
                 </div>
-                <button class="btn btn-primary" onclick="startGame()" id="startBtn">Empezar Partida</button>
+                <button type="button" class="btn btn-primary" onclick="startGame()" id="startBtn">Empezar Partida</button>
             </div>
         </div>
 
@@ -76,14 +77,14 @@
                 <div class="dice-team" id="diceTeamName">Equipo 1</div>
                 <div class="dice-title">🎲 ¡Lanza el dado!</div>
                 <div class="dice-face" id="diceFace">🎲</div>
-                <button class="btn btn-primary" id="rollBtn" onclick="rollModifier()">Lanzar dado</button>
+                <button type="button" class="btn btn-primary" id="rollBtn" onclick="rollModifier()">Lanzar dado</button>
                 <div class="dice-result" id="diceResult" style="display: none;">
                     <div class="modifier-display">
                         <span class="modifier-emoji" id="diceResultEmoji">🍆</span>
                         <div class="modifier-name" id="diceResultName">Berenjena</div>
                         <div class="modifier-description" id="diceResultDesc"></div>
                     </div>
-                    <button class="btn btn-success" onclick="startTurnFromDice()">▶ ¡A jugar!</button>
+                    <button type="button" class="btn btn-success" onclick="startTurnFromDice()">▶ ¡A jugar!</button>
                 </div>
             </div>
         </div>
@@ -95,7 +96,7 @@
                     <div class="round-info">RONDA <span id="currentRound">1</span>/<span id="totalRounds">10</span></div>
                     <div class="round-progress" id="roundProgress"></div>
                 </div>
-                <button class="pause-btn" id="pauseBtn" aria-label="Pausar" onclick="pauseGame()">⏸</button>
+                <button type="button" class="pause-btn" id="pauseBtn" aria-label="Pausar" onclick="pauseGame()">⏸</button>
             </div>
 
             <div class="game-main">
@@ -128,10 +129,10 @@
                 </div>
 
                 <div class="game-buttons">
-                    <button class="btn btn-success btn-action" id="btnCorrect" onclick="markCorrect()">✔ Acierto</button>
-                    <button class="btn btn-error btn-action" id="btnPass" onclick="markPass()">✖ Pasar</button>
+                    <button type="button" class="btn btn-success btn-action" id="btnCorrect" onclick="markCorrect()">✔ Acierto</button>
+                    <button type="button" class="btn btn-error btn-action" id="btnPass" onclick="markPass()">✖ Pasar</button>
                 </div>
-                <button class="btn btn-discard" id="btnDiscard" onclick="markDiscard()">🗑 Descartar</button>
+                <button type="button" class="btn btn-discard" id="btnDiscard" onclick="markDiscard()">🗑 Descartar</button>
             </div>
 
             <div class="scoreboard">
@@ -148,7 +149,7 @@
                 <div class="turn-summary-points">Puntos: <span id="turnSummaryPoints">0</span></div>
                 <div class="turn-summary-list" id="turnSummaryList"></div>
                 <div class="turn-summary-hint">¿Algún fallo al pulsar? Toca 🔄 para corregir una frase.</div>
-                <button class="btn btn-primary" onclick="continueFromSummary()">Continuar ▶</button>
+                <button type="button" class="btn btn-primary" onclick="continueFromSummary()">Continuar ▶</button>
             </div>
         </div>
 
@@ -187,7 +188,7 @@
                     </div>
                 </div>
 
-                <button class="btn btn-primary" id="nextRoundBtn" onclick="nextRound()">Siguiente Ronda</button>
+                <button type="button" class="btn btn-primary" id="nextRoundBtn" onclick="nextRound()">Siguiente Ronda</button>
             </div>
         </div>
 
@@ -216,8 +217,8 @@
                 </div>
 
                 <div style="display: flex; gap: 1rem; flex-direction: column;">
-                    <button class="btn btn-primary" onclick="goToHome()">🏠 Menú Principal</button>
-                    <button class="btn btn-secondary" onclick="goToSetup()">🎮 Nueva Partida</button>
+                    <button type="button" class="btn btn-primary" onclick="goToHome()">🏠 Menú Principal</button>
+                    <button type="button" class="btn btn-secondary" onclick="goToSetup()">🎮 Nueva Partida</button>
                 </div>
             </div>
         </div>

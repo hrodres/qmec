@@ -528,6 +528,37 @@ function goToHome() {
     showScreen("screenHome");
 }
 
+// ---- Continuar partida interrumpida (recarga accidental) ----
+// El estado se persiste en cada hito (startNewTurn, startTurnFromDice, endTurn,
+// continueFromSummary). Si la pagina se recarga por un gesto del navegador
+// (pull-to-refresh en movil, etc.), el boton "Continuar Partida" restaura
+// el marcador y la ronda y vuelve al dado del equipo que le toca jugar.
+function resumeGame() {
+    if (!loadPersistedState()) {
+        showScreen("screenHome");
+        return;
+    }
+    // Estado de turno limpio: no reanudamos timers automaticamente; el equipo
+    // actual relanza el dado y sigue la partida con el marcador restaurado.
+    gameState.isRunning = false;
+    gameState.roundStarted = false;
+    gameState.turnHistory = [];
+    gameState.turnPoints = 0;
+    gameState.currentModifier = null;
+    gameState.aeiouVowel = null;
+
+    const team = gameState.teams[gameState.currentTeamIndex];
+    setupRoundProgress();
+    updateScoreboard();
+    updateRoundProgress();
+    setLiveHits(0);
+    setPhraseVisible(true);
+    disableActionButtons(true);
+    updatePauseButton(false);
+    showDiceScreen(team);
+    persistState();
+}
+
 function goToSetup() {
     if (!maybeConfirmExit()) return;
     Temporizador.cancel();
@@ -691,9 +722,19 @@ function startGame() {
 
 // Inicializar pantalla de inicio
 document.addEventListener("DOMContentLoaded", () => {
-    // Si hay estado persistido de una partida interrumpida, ofrecemos
-    // continuar? Por simplicidad, arrancamos en inicio limpio.
     updateTeamCount();
+    // Si hay una partida interrumpida guardada, ofrecer continuarla
+    // (mejora 2026-08-25: antes una recarga accidental perdía la partida).
+    try {
+        const raw = localStorage.getItem(LS_KEY);
+        if (raw) {
+            const snap = JSON.parse(raw);
+            if (snap && Array.isArray(snap.teams) && snap.teams.length > 0) {
+                const btnResume = document.getElementById("btnResume");
+                if (btnResume) btnResume.style.display = "";
+            }
+        }
+    } catch (e) { /* sin almacenamiento: ignorar */ }
 });
 
 if (typeof module !== "undefined") {
@@ -701,6 +742,7 @@ if (typeof module !== "undefined") {
         startNewTurn, showNextPhrase, markCorrect, markPass, markDiscard, pauseGame,
         endTurn, nextRound, assignGuiners, finishGame, resetGame,
         goToHome, goToSetup, updateTeamCount, selectTeamTime, startGame,
+        resumeGame,
         toggleInstructions, changeNextTeamTime, schedulePreTurn, refillBag,
         rollModifier, startTurnFromDice, toggleTurnResult, continueFromSummary,
         showDiceScreen, updateRoundsCount
