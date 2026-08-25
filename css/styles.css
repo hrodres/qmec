@@ -179,6 +179,18 @@ body {
 }
 .btn-ghost:hover { background: rgba(255, 255, 255, .11); }
 
+/* Botón Terminar partida (final de cada turno, con confirmación) */
+.end-game-btn {
+  margin-top: 8px;
+  border-color: rgba(255, 93, 108, .42);
+  color: #FCA5A5;
+}
+.end-game-btn:hover {
+  background: rgba(255, 93, 108, .14);
+  border-color: rgba(255, 93, 108, .65);
+}
+.end-game-btn:active { transform: scale(.97); }
+
 .btn-pass {
   background: rgba(148, 163, 184, .12);
   border: 1px solid rgba(148, 163, 184, .3);
@@ -634,32 +646,70 @@ input[type="text"]:focus {
 .game-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 8px;
   padding: 2px 0;
 }
-.game-header-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-.pause-btn.end-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  font-size: 17px;
-  border-color: rgba(255, 93, 108, .3);
-  color: #FCA5A5;
-}
-.pause-btn.end-btn:active {
-  transform: scale(.92);
-  background: rgba(255, 93, 108, .14);
-}
-.round-block {
+.header-left {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
   min-width: 0;
+}
+.header-center {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding-top: 2px;
+}
+.header-team {
+  max-width: 100%;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  background: linear-gradient(120deg, #A78BFA, var(--magenta) 60%, var(--pink));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: drop-shadow(0 2px 14px rgba(139, 92, 246, .35));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.header-modifier {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 3px 10px 3px 7px;
+  border-radius: 999px;
+  background: rgba(217, 70, 239, .13);
+  border: 1px solid rgba(217, 70, 239, .4);
+  box-shadow: 0 0 16px rgba(217, 70, 239, .2);
+}
+.header-modifier .modifier-emoji {
+  font-size: 16px;
+  line-height: 1;
+}
+.header-modifier .modifier-name {
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: #E879F9;
+  white-space: nowrap;
+}
+.header-modifier .modifier-description {
+  font-size: 9px;
+  color: var(--text-dim);
+  max-width: 22ch;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .round-progress, #roundProgress { display: flex; gap: 5px; }
 .round-dot {
@@ -709,36 +759,6 @@ input[type="text"]:focus {
   width: 100%;
 }
 
-.team-turn {
-  text-align: center;
-  width: 100%;
-  animation: slideIn .5s ease-out;
-}
-@keyframes slideIn {
-  from { opacity: 0; transform: translateX(-20px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-.team-name {
-  font-size: clamp(1.55rem, 6.5vw, 2.3rem);
-  font-weight: 900;
-  letter-spacing: -.01em;
-  background: linear-gradient(120deg, #A78BFA, var(--magenta) 60%, var(--pink));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-  filter: drop-shadow(0 4px 24px rgba(139, 92, 246, .4));
-  overflow-wrap: anywhere;
-}
-.turn-label {
-  margin-top: 2px;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: .26em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  animation: softBlink 1.6s ease-in-out infinite;
-}
 @keyframes softBlink {
   0%, 100% { opacity: 1; }
   50%      { opacity: .4; }
@@ -769,7 +789,7 @@ input[type="text"]:focus {
 
 .phrase-card {
   width: 100%;
-  min-height: 104px;
+  min-height: 124px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -810,13 +830,11 @@ body:has(#modifierDisplay .vowel-icon) .phrase-card {
   -webkit-user-select: none;
 }
 
-.phrase-toggle-row {
-  display: flex;
-  justify-content: center;
-  margin-top: -8px;
-}
-
 /* ---------- Temporizador (elemento dominante) ---------- */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
 .timer {
   width: 100%;
   display: flex;
@@ -826,7 +844,7 @@ body:has(#modifierDisplay .vowel-icon) .phrase-card {
 }
 .timer-ring {
   position: relative;
-  width: min(190px, 52vw);
+  width: min(214px, 56vw);
   aspect-ratio: 1;
   border-radius: 50%;
   overflow: hidden;
@@ -981,7 +999,6 @@ body:has(#modifierDisplay .vowel-icon) .phrase-card {
   .btn-action { height: 50px; }
   .scoreboard-team { padding: 5px 4px; }
   .scoreboard-points { font-size: 17px; }
-  .turn-label { font-size: 10px; }
 }
 
 /* ============ PANTALLA 3.5 — RESUMEN DEL TURNO ============ */
