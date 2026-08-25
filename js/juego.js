@@ -21,6 +21,10 @@
 // la cuenta atras. Debe poder cancelarse en pausa/reset (A3, B5).
 let preTurnTimeout = null;
 let pausedBeforeStart = false;
+// Fase 3A anti doble-tap: mientras es true, Acierto/Pasar no hacen nada.
+// Se activa al pulsar (deshabilitando los botones al momento) y se libera
+// cuando showNextPhrase muestra la nueva frase (o al resumir/pausar).
+let antiDoubleTap = false;
 
 // Tiempo seleccionado en el setup por equipo (indice 1..N)
 let setupTimes = {};
@@ -61,6 +65,10 @@ function showNextPhrase() {
     // Registro para el resumen del turno (pendiente: null -> se resuelve al pulsar)
     gameState.turnHistory.push({ phrase: gameState.currentPhrase, correct: null });
     displayPhrase(); // NO cambia el modificador (regla nueva)
+    // Fase 3A: la nueva frase ya está en pantalla -> reactivar Acierto/Pasar
+    // (si el turno sigue en marcha; si no, siguen deshabilitados).
+    disableActionButtons(!(gameState.isRunning && gameState.roundStarted));
+    antiDoubleTap = false;
 }
 
 // ---- Modificador (REGLA NUEVA: fijo por turno; lo decide el DADO) ----
@@ -71,7 +79,22 @@ function displayModifier() {
     applyModifierIcon(document.getElementById("modifierEmoji"), m);
     document.getElementById("modifierName").textContent = m.name;
     document.getElementById("modifierDesc").textContent = modifierDescription(m);
-    if (disp) disp.style.display = "flex"; // pill compacta en el header (antes "block")
+    if (disp) {
+        disp.style.display = "flex"; // chip compacta en el header (nunca display:none)
+        // Fase 1A: tocar la pill del modo expande/contrae la descripción.
+        // onclick directo (sin id nuevo) para que el conductor lea la regla
+        // del turno sin pausar. El emoji + nombre SIEMPRE están visibles.
+        if (!disp.dataset.tapBound) {
+            disp.dataset.tapBound = "1";
+            disp.addEventListener("click", () => {
+                if (disp.classList.contains("expanded")) {
+                    disp.classList.remove("expanded");
+                } else {
+                    disp.classList.add("expanded");
+                }
+            });
+        }
+    }
 }
 
 // Icono del modificador: en AEIOU muestra la vocal ELEGIDA del turno
@@ -83,8 +106,8 @@ function applyModifierIcon(el, m) {
     el.classList.toggle("vowel-icon", isVowels);
 }
 
-// Descripcion dinamica: en AEIOU se muestra la vocal elegida para el turno
-// (a/e/i/o/u aleatoria), no siempre la "a" (mejora 2026-08-25).
+// Descripcion dinamica: en AEIOU se muestra la vocal del turno en curso
+// (arranca en A y sube con cada acierto: a→e→i→o→u→a…).
 function modifierDescription(m) {
     if (!m) return "";
     if (m.type === "vowels") {
@@ -97,7 +120,39 @@ function modifierDescription(m) {
 function displayPhrase() {
     // El modificador ya esta fijado para el turno; solo actualizamos la frase.
     const phrase = gameState.currentPhrase;
-    document.getElementById("phraseText").textContent = phrase.texto;
+    const catEl = document.querySelector(".phrase-category");
+    if (catEl) {
+        // Fase 1D: categoria como pista (MODISMO / REFRÁN / POP / ANUNCIO / CANCIÓN)
+        catEl.textContent = (phrase.categoria || "").toUpperCase();
+        catEl.style.display = phrase.categoria ? "" : "none";
+    }
+    document.getElementById("phraseText").textContent = applyModifierToPhrase(phrase);
+}
+
+// ---- Aplicación del modificador al TEXTO mostrado ----
+// Solo AEIOU transforma el texto; el resto de modificadores son reglas de
+// DESCRIPCIÓN (la frase original se muestra tal cual).
+function applyModifierToPhrase(phrase) {
+    if (!phrase || !phrase.texto) return "";
+    if (gameState.currentModifier && gameState.currentModifier.type === "vowels") {
+        const vowel = (gameState.aeiouVowel || "a")[0] || "a";
+        return applyAEIOU(phrase.texto, vowel);
+    }
+    return phrase.texto;
+}
+
+// ---- AEIOU: sustituye TODAS las vocales (con y sin tilde, may/min) -------
+// Conserva mayúsculas (A→A, a→a) y normaliza las tildes: la vocal de
+// sustitución va SIN tilde (regla cerrada de Héctor: cambia por la vocal
+// actual, no por una acentuada).
+const AEIOU_VOWELS = ["a", "e", "i", "o", "u"];
+const AEIOU_RE = /[aáàäâAÁÀÄÂeéèëêEÉÈËÊiíìïîIÍÌÏÎoóòöôOÓÒÖÔuúùüûUÚÙÜÛ]/g;
+function applyAEIOU(text, vowel) {
+    const v = (vowel || "a").toLowerCase()[0] || "a";
+    return String(text).replace(AEIOU_RE, (ch) => {
+        // Si la vocal original era MAYÚSCULA, la sustitución va en mayúscula
+        return (ch === ch.toUpperCase()) ? v.toUpperCase() : v;
+    });
 }
 
 // ---- Temporizador display ----
@@ -127,7 +182,6 @@ function schedulePreTurn() {
         preTurnTimeout = null;
         if (!gameState.isRunning) return; // pausado/reset durante la intro
         gameState.roundStarted = true;
-        setPhraseVisible(true);
         Temporizador.start(gameState.totalTime, {
             onTick: (remSec, totalSec) => updateTimerDisplay(remSec, totalSec),
             onEnd: () => endTurn()
@@ -161,7 +215,6 @@ function startNewTurn() {
     updateRoundProgress();
 
     setLiveHits(0);
-    setPhraseVisible(true);
     disableActionButtons(true);
     updatePauseButton(false);
 
@@ -209,10 +262,11 @@ function rollModifier() {
             // Resultado final: TOTALMENTE aleatorio, sin exclusiones
             const res = MODIFICADORES[Math.floor(Math.random() * MODIFICADORES.length)];
             gameState.currentModifier = res;
-            // AEIOU: eligir UNA vocal aleatoria (a/e/i/o/u) para el turno
-            // (mejora 2026-08-25: antes "jugaba" siempre con la a).
+            // Fase 2A: AEIOU arranca SIEMPRE en la vocal 'a' (decisión de
+            // Héctor, 2026-08-25: nada de vocal aleatoria). Después de cada
+            // acierto sube a la siguiente vocal (a→e→i→o→u→a…).
             if (res.type === "vowels") {
-                gameState.aeiouVowel = ["a", "e", "i", "o", "u"][Math.floor(Math.random() * 5)];
+                gameState.aeiouVowel = "a";
             }
             face.textContent = res.emoji;
             face.classList.remove("rolling");
@@ -235,7 +289,6 @@ function startTurnFromDice() {
     displayModifier();
     showNextPhrase(); // registra la primera frase en turnHistory
     setLiveHits(0);
-    setPhraseVisible(true);
     schedulePreTurn();
     gameState.resumeAdvance = false; // turno en curso -> reanudar lo rehace desde el dado
     persistState();
@@ -243,6 +296,11 @@ function startTurnFromDice() {
 
 // ---- Marcar acierto / pasar (A3, B2, B4) ----
 function markCorrect() {
+    // Guard (Fase 3A anti doble-tap): bloqueo INMEDIATO del doble-tap ANTES
+    // de evaluar el resto. Si ya estamos procesando un tap, salimos.
+    if (antiDoubleTap) return;
+    antiDoubleTap = true;
+    disableActionButtons(true);
     // Guard: solo si corre el turno y queda tiempo
     if (!gameState.isRunning || !gameState.roundStarted) return;
     if (Temporizador.getRemainingSeconds() <= 0) return;
@@ -252,10 +310,23 @@ function markCorrect() {
     gameState.roundScores[team] = (gameState.roundScores[team] || 0) + 1;
     setLiveHits(gameState.roundScores[team]);
     vibrate(40);
-    showNextPhrase();
+    // Fase 2A: en AEIOU, cada acierto AVANZA la vocal (a→e→i→o→u→a…)
+    if (gameState.currentModifier && gameState.currentModifier.type === "vowels") {
+        const idx = AEIOU_VOWELS.indexOf(gameState.aeiouVowel);
+        gameState.aeiouVowel = AEIOU_VOWELS[(idx + 1) % AEIOU_VOWELS.length];
+        const disp = document.getElementById("modifierDisplay");
+        applyModifierIcon(document.getElementById("modifierEmoji"), gameState.currentModifier);
+        document.getElementById("modifierDesc").textContent = modifierDescription(gameState.currentModifier);
+        if (disp) disp.style.display = "flex";
+    }
+    showNextPhrase(); // la siguiente frase ya se sustituye con la vocal ACTUAL
 }
 
 function markPass() {
+    // Guard (Fase 3A anti doble-tap)
+    if (antiDoubleTap) return;
+    antiDoubleTap = true;
+    disableActionButtons(true);
     if (!gameState.isRunning || !gameState.roundStarted) return;
     if (Temporizador.getRemainingSeconds() <= 0) return;
     const last = gameState.turnHistory[gameState.turnHistory.length - 1];
@@ -285,9 +356,10 @@ function pauseGame() {
             pausedBeforeStart = false;
         }
         gameState.isRunning = true;
-        disableActionButtons(false);
+        disableActionButtons(gameState.roundStarted === false);
         updatePauseButton(false);
         if (gameState.roundStarted) {
+            antiDoubleTap = false;
             Temporizador.resume();
         } else {
             pausedBeforeStart = false;
@@ -338,13 +410,16 @@ function toggleTurnResult(index) {
     gameState.turnPoints = points;
     gameState.roundScores[team] = points;
     gameState.totalScores[team] = (gameState.totalScores[team] || 0) + (wasCorrect ? -1 : 1);
+    // Fase 3D: la corrección también sobrevive a una recarga (persistState)
+    persistState();
     renderTurnSummary();
 }
 
-// ---- Continuar desde el resumen -> fin de ronda ----
+// ---- Continuar desde el resumen -> fin de ronda / fin de turno ----
 function continueFromSummary() {
     const team = gameState.teams[gameState.currentTeamIndex];
     const points = gameState.turnPoints || 0;
+    const isLastTeamOfRound = gameState.currentTeamIndex >= gameState.teams.length - 1;
 
     // Indicar la ronda actual del total en el fin de ronda (mejora 2026-08-25)
     const roundEndInfo = document.getElementById("roundEndRoundInfo");
@@ -370,6 +445,18 @@ function continueFromSummary() {
         });
     } else {
         document.getElementById("timeChangeSection").style.display = "none";
+    }
+
+    // Fase 1B: pantalla honesta. Si quedan equipos por jugar en esta ronda,
+    // esto es un FIN DE TURNO (no de ronda): título/botón lo dicen. Solo el
+    // ÚLTIMO equipo de la ronda ve "¡Fin de Ronda!" / "Siguiente Ronda".
+    const endTitle = document.querySelector(".round-end-title");
+    const endBtn = document.getElementById("nextRoundBtn");
+    if (endTitle) {
+        endTitle.textContent = isLastTeamOfRound ? "¡Fin de Ronda!" : "Fin de Turno";
+    }
+    if (endBtn) {
+        endBtn.textContent = isLastTeamOfRound ? "Siguiente Ronda" : "Siguiente equipo";
     }
 
     // El turno actual ya se jugó (estamos en su fin de ronda): el snapshot
@@ -431,6 +518,8 @@ function assignGuiners() {
 // ---- Fin de juego / podio ----
 // Campeón por TARJETAS GÜINER; en empate de güiner, decide el nº de aciertos
 // (mejora 2026-08-25: antes se decidía solo por puntos/aciertos).
+// Fase 1C: si tras güiner Y puntos totales persiste el empate, se muestra
+// EMPATE en vez de coronar a uno solo (no se silencia).
 function finishGame() {
     clearPersistedState();
     // La partida ya terminó: ocultar "Continuar Partida" si se vuelve al menú
@@ -439,10 +528,33 @@ function finishGame() {
     const ranking = Object.entries(gameState.totalScores)
         .map(([name, pts]) => ({ name, pts, guin: gameState.guiner[name] || 0 }))
         .sort((a, b) => (b.guin - a.guin) || (b.pts - a.pts));
-    const champion = ranking[0].name;
-    document.getElementById("championName").textContent = teamLabel(champion); // "Equipo N · Nombre"
-    document.getElementById("finalPoints").textContent = gameState.totalScores[champion];
-    document.getElementById("finalGuiner").textContent = gameState.guiner[champion] || 0;
+
+    const top = ranking[0];
+    // Desempate documentado: güiner → puntos totales → EMPATE (no coronar solo)
+    const tied = ranking.filter(e => e.guin === top.guin && e.pts === top.pts);
+    const isTie = tied.length > 1;
+
+    const championNameEl = document.getElementById("championName");
+    const championEmojiEl = document.querySelector(".champion-emoji");
+    const kickerEl = document.querySelector(".final-container .screen-kicker");
+    if (isTie) {
+        // Empate total: mostrarlo explícitamente, no silenciarlo
+        championNameEl.textContent = "EMPATE";
+        if (championEmojiEl) championEmojiEl.textContent = "🤝";
+        if (kickerEl) kickerEl.textContent = "EMPATE FINAL";
+        const names = tied.map(e => teamLabel(e.name)).join(" · ");
+        championNameEl.title = names;
+        // Aciertos y güiner de los empatados (idénticos entre ellos)
+        document.getElementById("finalPoints").textContent = gameState.totalScores[top.name];
+        document.getElementById("finalGuiner").textContent = gameState.guiner[top.name] || 0;
+    } else {
+        const champion = top.name;
+        championNameEl.textContent = teamLabel(champion); // "Equipo N · Nombre"
+        if (championEmojiEl) championEmojiEl.textContent = "👑";
+        if (kickerEl) kickerEl.textContent = "CAMPEÓN";
+        document.getElementById("finalPoints").textContent = gameState.totalScores[champion];
+        document.getElementById("finalGuiner").textContent = gameState.guiner[champion] || 0;
+    }
 
     // Podio: muestra las tarjetas güiner (criterio de victoria), no los puntos
     renderPodio(ranking.map(e => [e.name, e.guin]));
@@ -464,16 +576,13 @@ function resetGame() {
         currentTeamIndex: 0,
         isRunning: false,
         roundStarted: false,
-        usedPhrases: [],
         phraseBag: [],
         currentPhrase: "",
         currentModifier: null,
         aeiouVowel: null,
-        lastModifierIndex: -1,
         roundScores: {},
         totalScores: {},
         guiner: {},
-        roundStartedAt: 0,
         totalTime: 0,
         timeLeft: 0,
         turnHistory: [],
@@ -552,7 +661,6 @@ function resumeGame() {
     updateScoreboard();
     updateRoundProgress();
     setLiveHits(0);
-    setPhraseVisible(true);
     disableActionButtons(true);
     updatePauseButton(false);
     showDiceScreen(team);
@@ -661,7 +769,7 @@ function startGame() {
     gameState.roundScores = {};
     gameState.totalScores = {};
     gameState.guiner = {};
-    gameState.lastModifierIndex = -1;
+    gameState.aeiouVowel = null;
 
     teams.forEach((team, idx) => {
         gameState.totalScores[team] = 0;

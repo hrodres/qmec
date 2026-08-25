@@ -34,7 +34,7 @@
   --amber: #FBBF24;
   --text: #F8FAFC;
   --text-dim: #A5B0C9;
-  --text-faint: #6E7893;
+  --text-faint: #8B96B3;
   --line: rgba(255, 255, 255, .1);
   --line-strong: rgba(255, 255, 255, .16);
   --radius-lg: 24px;
@@ -179,11 +179,25 @@ body {
 }
 .btn-ghost:hover { background: rgba(255, 255, 255, .11); }
 
-/* Botón Terminar partida (final de cada turno, con confirmación) */
+/* Botón Terminar partida (con confirmación). Visible en el resumen del turno
+   y, desde la Fase 3F, también en la pantalla del dado y durante el turno
+   (variante minimalista fuera del resumen para no robar protagonismo). */
 .end-game-btn {
   margin-top: 8px;
   border-color: rgba(255, 93, 108, .42);
   color: #FCA5A5;
+}
+/* Fase 3F: fuera del resumen del turno el botón es discreto (ghost + borde
+   rojo suave), para que Acierto/Pasar sigan siendo los protagonistas. */
+#screenDice .end-game-btn,
+#screenGame .end-game-btn {
+  margin-top: 6px;
+  min-height: 42px;
+  padding: 6px 14px;
+  font-size: 11.5px;
+  align-self: center;
+  border-color: rgba(255, 93, 108, .3);
+  background: rgba(255, 93, 108, .05);
 }
 .end-game-btn:hover {
   background: rgba(255, 93, 108, .14);
@@ -554,6 +568,36 @@ input[type="text"]:focus {
   text-align: center;
   gap: 14px;
 }
+/* Fase 3F: el contenedor del resultado del dado es una pill TÁCTIL que
+   inicia el turno (la transición tras el dado no podía quedar sin acción).
+   Sin id: clase pura. La pill muestra emoji + nombre del modo; los a11y
+   leen el texto del resultado ya anunciado por el dado. */
+.dice-result {
+  width: 100%;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: screenIn .4s ease-out;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.dice-result:focus-visible { outline: 3px solid var(--magenta); outline-offset: 2px; }
+.dice-result:hover .modifier-display {
+  border-color: rgba(217, 70, 239, .65);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .3), 0 0 26px rgba(217, 70, 239, .28), inset 0 1px 0 rgba(255, 255, 255, .07);
+}
+.dice-result .modifier-display { transition: border-color .2s ease, box-shadow .2s ease; }
+/* Subtítulo de acción de la pill (JS lo rellena en el momento del dado) */
+.dice-result-hint {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
 .dice-team {
   font-size: 14px;
   font-weight: 800;
@@ -701,30 +745,74 @@ input[type="text"]:focus {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* #modifierDisplay: pill circular SOLO con el emoji (26px). El JS le pone
-   display:flex cuando hay modo activo (display dinámico, nunca fijo aquí).
-   Nombre y descripción se siguen escribiendo por JS pero quedan ocultos. */
+/* #modifierDisplay: chip del modo activo en el turno (Fase 1A).
+   El conductor DEBE ver la regla del turno: emoji + nombre SIEMPRE
+   visibles; la descripción se despliega al tocar el chip (expande).
+   El JS le pone display:flex cuando hay modo activo; nunca display:none. */
 .header-modifier {
   display: flex;
   align-items: center;
   justify-content: center;
   flex: none;
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
+  gap: 6px;
+  max-width: 148px;
+  min-height: 46px;
+  padding: 0 10px 0 7px;
+  border-radius: 99px;
   background: rgba(217, 70, 239, .13);
   border: 1px solid rgba(217, 70, 239, .45);
   box-shadow: 0 0 16px rgba(217, 70, 239, .28);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  transition: transform .13s ease, background .2s ease;
 }
+.header-modifier:active { transform: scale(.95); }
+.header-modifier:focus-visible { outline: 3px solid var(--magenta); outline-offset: 2px; }
 .header-modifier .modifier-emoji {
   flex: none;
-  font-size: 26px;
+  font-size: 22px;
   line-height: 1;
   filter: drop-shadow(0 0 10px rgba(232, 121, 249, .65));
 }
-.header-modifier .modifier-name,
+.header-modifier .modifier-name {
+  flex: none;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #E879F9;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .header-modifier .modifier-description {
-  display: none; /* en el DOM y escritos por JS, pero invisibles */
+  display: none; /* visible solo al expandir el chip (Fase 1A) */
+}
+.header-modifier.expanded {
+  max-width: 182px;
+  align-items: flex-start;
+  border-radius: 18px;
+  padding: 8px 12px 8px 10px;
+}
+.header-modifier.expanded .modifier-name {
+  font-size: 11.5px;
+  letter-spacing: .04em;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.25;
+}
+.header-modifier.expanded .modifier-description {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-align: left;
+  line-height: 1.3;
+  max-width: 30ch;
 }
 
 /* Progreso de ronda: tira segmentada a ancho completo bajo el header */
@@ -823,8 +911,10 @@ input[type="text"]:focus {
   min-height: 200px;
   max-height: 240px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   background: linear-gradient(160deg, rgba(139, 92, 246, .16), rgba(217, 70, 239, .07));
   border: 1.5px solid rgba(167, 139, 250, .38);
   border-radius: var(--radius-lg);
@@ -832,6 +922,26 @@ input[type="text"]:focus {
   box-shadow: 0 20px 50px rgba(0, 0, 0, .38), inset 0 1px 0 rgba(255, 255, 255, .08);
   animation: slideIn .45s ease-out .15s both;
   transition: border-color .3s ease, box-shadow .3s ease;
+}
+/* Fase 1D: pista de categoría encima de la frase (MODISMO / REFRÁN / POP /
+   ANUNCIO / CANCIÓN). Sin id: clase pura, el JS escribe su texto. */
+.phrase-category {
+  flex: none;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  text-align: center;
+  line-height: 1.2;
+  min-height: 12px;
+}
+.phrase-category::before,
+.phrase-category::after {
+  content: "·";
+  margin: 0 8px;
+  color: var(--magenta);
+  opacity: .8;
 }
 .phrase-text {
   font-size: clamp(1.45rem, 6vw, 2.05rem);
@@ -850,7 +960,8 @@ body:has(#modifierDisplay .vowel-icon) .phrase-card {
   box-shadow: 0 20px 50px rgba(0, 0, 0, .38), 0 0 34px rgba(252, 211, 77, .1), inset 0 1px 0 rgba(255, 255, 255, .08);
 }
 
-/* Anti-peek: frase oculta (toggle .phrase-hidden) */
+/* Anti-peek: la frase siempre es visible en el turno (el toggle Mostrar/
+   Ocultar se retiró en la Fase 3C: el botón ya no existe). */
 .phrase-card.phrase-hidden {
   filter: blur(10px);
   opacity: .8;
@@ -1033,8 +1144,10 @@ body:has(#modifierDisplay .vowel-icon) .phrase-card {
   #screenGame { gap: 6px; }
   .header-row { padding: 1px 0 0; }
   .header-team { font-size: 15px; }
-  .header-modifier { width: 42px; height: 42px; }
-  .header-modifier .modifier-emoji { font-size: 24px; }
+  .header-modifier { min-height: 42px; max-width: 132px; padding: 0 8px 0 6px; }
+  .header-modifier .modifier-emoji { font-size: 20px; }
+  .header-modifier .modifier-name { font-size: 10px; }
+  .header-modifier.expanded { max-width: 168px; }
   .round-progress { margin-top: 4px; }
   .live-hits { margin-top: 2px; padding: 5px 14px; font-size: 13px; }
   .game-main { gap: 12px; margin-bottom: 3px; }
@@ -1050,8 +1163,10 @@ body:has(#modifierDisplay .vowel-icon) .phrase-card {
   #screenGame { gap: 5px; }
   .header-row { padding: 0; }
   .header-team { font-size: 14px; }
-  .header-modifier { width: 40px; height: 40px; }
-  .header-modifier .modifier-emoji { font-size: 22px; }
+  .header-modifier { min-height: 40px; max-width: 122px; padding: 0 7px 0 5px; }
+  .header-modifier .modifier-emoji { font-size: 18px; }
+  .header-modifier .modifier-name { font-size: 9.5px; }
+  .header-modifier.expanded { max-width: 158px; }
   .pause-btn { width: 40px; height: 40px; border-radius: 13px; }
   .round-dot { height: 5px; }
   .game-main { gap: 10px; margin-bottom: 2px; }

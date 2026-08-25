@@ -38,16 +38,14 @@ let gameState = {
     currentTeamIndex: 0,
     isRunning: false,
     roundStarted: false,
-    usedPhrases: [],      // frases ya usadas en ESTE turno (mazo del turno)
-    phraseBag: [],        // mazo barajado (shuffle bag) de frases del turno
+    phraseBag: [],        // mazo barajado (shuffle bag) global de la partida
     currentPhrase: "",
     currentModifier: null,
-    aeiouVowel: null,       // vocal elegida para el modificador AEIOU (a/e/i/o/u)
-    lastModifierIndex: -1,// para evitar repetir el modificador del turno anterior
+    aeiouVowel: null,       // vocal actual del modificador AEIOU: arranca en "a"
+                            // y sube tras cada acierto (a→e→i→o→u→a…)
     roundScores: {},
     totalScores: {},
     guiner: {},           // { displayName: tarjetas }
-    roundStartedAt: 0,    // timestamp de inicio del temporizador (Date.now)
     totalTime: 0,         // segundos del turno actual
     timeLeft: 0,          // segundos restantes (decimal interno)
     turnHistory: [],      // frases del turno actual: [{ phrase, correct|null }]

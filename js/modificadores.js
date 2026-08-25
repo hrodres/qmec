@@ -26,7 +26,7 @@ const MODIFICADORES = [
         emoji: "🅰️",
         name: "AEIOU",
         type: "vowels",
-        desc: "Cambia todas las vocales por una vocal aleatoria"
+        desc: "Cambia todas las vocales por la vocal del turno (A→E→I→O→U por acierto)"
     },
     {
         id: 4,

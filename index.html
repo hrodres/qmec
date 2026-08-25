@@ -92,14 +92,15 @@
                 <h2 class="dice-title">🎲 ¡Lanza el dado!</h2>
                 <div class="dice-face" id="diceFace" role="img" aria-label="Dado de modificadores">🎲</div>
                 <button type="button" class="btn btn-primary btn-dice-roll" id="rollBtn" onclick="rollModifier()">Lanzar dado</button>
-                <div class="dice-result" id="diceResult" style="display: none;">
+                <div class="dice-result" id="diceResult" style="display: none;" tabindex="0" role="button" aria-label="Ver resultado y empezar el turno" onclick="startTurnFromDice()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();startTurnFromDice();}">
                     <div class="modifier-display">
                         <span class="modifier-emoji" id="diceResultEmoji">🍆</span>
                         <div class="modifier-name" id="diceResultName">Berenjena</div>
                         <div class="modifier-description" id="diceResultDesc"></div>
                     </div>
-                    <button type="button" class="btn btn-success btn-block" onclick="startTurnFromDice()">▶ ¡A jugar!</button>
+                    <div class="dice-result-hint">▶ Toca para jugar</div>
                 </div>
+                <button type="button" class="btn btn-ghost end-game-btn" onclick="endGameEarly()">⏹ Terminar partida</button>
             </div>
         </div>
 
@@ -132,13 +133,14 @@
                     <div class="timer-ring">
                         <div class="timer-fill" id="timerBar" style="width: 100%;"></div>
                         <div class="timer-core">
-                            <span class="timer-digits" id="timerDisplay" role="timer" aria-live="assertive">00:30</span>
+                            <span class="timer-digits" id="timerDisplay" role="timer" aria-live="off">00:30</span>
                             <span class="timer-sub">TIEMPO</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="phrase-card" id="phraseCard">
+                    <div class="phrase-category"></div>
                     <div class="phrase-text" id="phraseText">Cargando...</div>
                 </div>
             </div>
@@ -147,6 +149,7 @@
                 <button type="button" class="btn btn-success btn-action" id="btnCorrect" onclick="markCorrect()">✔ Acierto</button>
                 <button type="button" class="btn btn-pass btn-action" id="btnPass" onclick="markPass()">⏭ Pasar</button>
             </div>
+            <button type="button" class="btn btn-ghost end-game-btn" onclick="endGameEarly()">⏹ Terminar partida</button>
             <aside class="scoreboard" aria-label="Marcador">
                 <div class="scoreboard-title">Marcador</div>
                 <div class="scoreboard-teams" id="scoreboardTeams"></div>
