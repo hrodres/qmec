@@ -64,27 +64,6 @@ function setLiveHits(n) {
     if (el) el.textContent = `Aciertos: ${n}`;
 }
 
-// ---- Toggle Mostrar/Ocultar frase (B3, anti-peek) ----
-function setPhraseVisible(visible) {
-    const card = document.getElementById("phraseCard");
-    const btn = document.getElementById("togglePhraseBtn");
-    if (!card) return;
-    if (visible) {
-        card.classList.remove("phrase-hidden");
-        if (btn) btn.textContent = "🙈 Ocultar frase";
-    } else {
-        card.classList.add("phrase-hidden");
-        if (btn) btn.textContent = "👁 Mostrar frase";
-    }
-}
-
-function togglePhrase() {
-    const card = document.getElementById("phraseCard");
-    if (!card) return;
-    const hidden = card.classList.contains("phrase-hidden");
-    setPhraseVisible(hidden); // si estaba oculta -> mostrar
-}
-
 // ---- Vibration helper (mejora) ----
 function vibrate(ms) {
     try {
@@ -165,7 +144,7 @@ function maybeConfirmExit() {
 if (typeof module !== "undefined") {
     module.exports = {
         showScreen, updateScoreboard, updateRoundProgress, setupRoundProgress,
-        setLiveHits, setPhraseVisible, togglePhrase, vibrate,
+        setLiveHits, vibrate,
         updateRoundEndRanking, renderPodio, maybeConfirmExit, renderTurnSummary
     };
 }
