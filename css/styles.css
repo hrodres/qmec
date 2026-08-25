@@ -34,7 +34,7 @@
   --amber: #FBBF24;
   --text: #F8FAFC;
   --text-dim: #A5B0C9;
-  --text-faint: #6E7893;
+  --text-faint: #8B96B3;
   --line: rgba(255, 255, 255, .1);
   --line-strong: rgba(255, 255, 255, .16);
   --radius-lg: 24px;
@@ -179,11 +179,25 @@ body {
 }
 .btn-ghost:hover { background: rgba(255, 255, 255, .11); }
 
-/* Botón Terminar partida (final de cada turno, con confirmación) */
+/* Botón Terminar partida (con confirmación). Visible en el resumen del turno
+   y, desde la Fase 3F, también en la pantalla del dado y durante el turno
+   (variante minimalista fuera del resumen para no robar protagonismo). */
 .end-game-btn {
   margin-top: 8px;
   border-color: rgba(255, 93, 108, .42);
   color: #FCA5A5;
+}
+/* Fase 3F: fuera del resumen del turno el botón es discreto (ghost + borde
+   rojo suave), para que Acierto/Pasar sigan siendo los protagonistas. */
+#screenDice .end-game-btn,
+#screenGame .end-game-btn {
+  margin-top: 6px;
+  min-height: 42px;
+  padding: 6px 14px;
+  font-size: 11.5px;
+  align-self: center;
+  border-color: rgba(255, 93, 108, .3);
+  background: rgba(255, 93, 108, .05);
 }
 .end-game-btn:hover {
   background: rgba(255, 93, 108, .14);
@@ -554,6 +568,36 @@ input[type="text"]:focus {
   text-align: center;
   gap: 14px;
 }
+/* Fase 3F: el contenedor del resultado del dado es una pill TÁCTIL que
+   inicia el turno (la transición tras el dado no podía quedar sin acción).
+   Sin id: clase pura. La pill muestra emoji + nombre del modo; los a11y
+   leen el texto del resultado ya anunciado por el dado. */
+.dice-result {
+  width: 100%;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: screenIn .4s ease-out;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.dice-result:focus-visible { outline: 3px solid var(--magenta); outline-offset: 2px; }
+.dice-result:hover .modifier-display {
+  border-color: rgba(217, 70, 239, .65);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .3), 0 0 26px rgba(217, 70, 239, .28), inset 0 1px 0 rgba(255, 255, 255, .07);
+}
+.dice-result .modifier-display { transition: border-color .2s ease, box-shadow .2s ease; }
+/* Subtítulo de acción de la pill (JS lo rellena en el momento del dado) */
+.dice-result-hint {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
 .dice-team {
   font-size: 14px;
   font-weight: 800;
@@ -916,7 +960,8 @@ body:has(#modifierDisplay .vowel-icon) .phrase-card {
   box-shadow: 0 20px 50px rgba(0, 0, 0, .38), 0 0 34px rgba(252, 211, 77, .1), inset 0 1px 0 rgba(255, 255, 255, .08);
 }
 
-/* Anti-peek: frase oculta (toggle .phrase-hidden) */
+/* Anti-peek: la frase siempre es visible en el turno (el toggle Mostrar/
+   Ocultar se retiró en la Fase 3C: el botón ya no existe). */
 .phrase-card.phrase-hidden {
   filter: blur(10px);
   opacity: .8;
